@@ -44,6 +44,10 @@ service TaskService {
   rpc SummarizeTask(SummarizeTaskRequest) returns (TaskSummary) {
     option (google.api.http) = {get: "/v1/tasks/{id}/summary"};
   }
+  // GetSessionScreen shows what the task's session terminal shows right now.
+  rpc GetSessionScreen(GetSessionScreenRequest) returns (SessionScreen) {
+    option (google.api.http) = {get: "/v1/tasks/{id}/screen"};
+  }
   // SendToTask delivers a message into the task's Claude session (Discord
   // /say, thread replies, coherence comments). Queued while the session is
   // not running; delivered when it next starts.
@@ -91,6 +95,17 @@ message ResumeTaskRequest {
 
 message SummarizeTaskRequest {
   string id = 1;
+}
+
+message GetSessionScreenRequest {
+  string id = 1;
+  int32 history_lines = 2;
+}
+
+message SessionScreen {
+  string text = 1;
+  // False when the task has no running session.
+  bool live = 2;
 }
 
 message SendToTaskRequest {

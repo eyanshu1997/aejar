@@ -19,14 +19,15 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	TaskService_CreateTask_FullMethodName    = "/aejar.v1.TaskService/CreateTask"
-	TaskService_GetTask_FullMethodName       = "/aejar.v1.TaskService/GetTask"
-	TaskService_ListTasks_FullMethodName     = "/aejar.v1.TaskService/ListTasks"
-	TaskService_SetPriority_FullMethodName   = "/aejar.v1.TaskService/SetPriority"
-	TaskService_PauseTask_FullMethodName     = "/aejar.v1.TaskService/PauseTask"
-	TaskService_ResumeTask_FullMethodName    = "/aejar.v1.TaskService/ResumeTask"
-	TaskService_SummarizeTask_FullMethodName = "/aejar.v1.TaskService/SummarizeTask"
-	TaskService_SendToTask_FullMethodName    = "/aejar.v1.TaskService/SendToTask"
+	TaskService_CreateTask_FullMethodName       = "/aejar.v1.TaskService/CreateTask"
+	TaskService_GetTask_FullMethodName          = "/aejar.v1.TaskService/GetTask"
+	TaskService_ListTasks_FullMethodName        = "/aejar.v1.TaskService/ListTasks"
+	TaskService_SetPriority_FullMethodName      = "/aejar.v1.TaskService/SetPriority"
+	TaskService_PauseTask_FullMethodName        = "/aejar.v1.TaskService/PauseTask"
+	TaskService_ResumeTask_FullMethodName       = "/aejar.v1.TaskService/ResumeTask"
+	TaskService_SummarizeTask_FullMethodName    = "/aejar.v1.TaskService/SummarizeTask"
+	TaskService_GetSessionScreen_FullMethodName = "/aejar.v1.TaskService/GetSessionScreen"
+	TaskService_SendToTask_FullMethodName       = "/aejar.v1.TaskService/SendToTask"
 )
 
 // TaskServiceClient is the client API for TaskService service.
@@ -42,6 +43,8 @@ type TaskServiceClient interface {
 	PauseTask(ctx context.Context, in *PauseTaskRequest, opts ...grpc.CallOption) (*Task, error)
 	ResumeTask(ctx context.Context, in *ResumeTaskRequest, opts ...grpc.CallOption) (*Task, error)
 	SummarizeTask(ctx context.Context, in *SummarizeTaskRequest, opts ...grpc.CallOption) (*TaskSummary, error)
+	// GetSessionScreen shows what the task's session terminal shows right now.
+	GetSessionScreen(ctx context.Context, in *GetSessionScreenRequest, opts ...grpc.CallOption) (*SessionScreen, error)
 	// SendToTask delivers a message into the task's Claude session (Discord
 	// /say, thread replies, coherence comments). Queued while the session is
 	// not running; delivered when it next starts.
@@ -126,6 +129,16 @@ func (c *taskServiceClient) SummarizeTask(ctx context.Context, in *SummarizeTask
 	return out, nil
 }
 
+func (c *taskServiceClient) GetSessionScreen(ctx context.Context, in *GetSessionScreenRequest, opts ...grpc.CallOption) (*SessionScreen, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SessionScreen)
+	err := c.cc.Invoke(ctx, TaskService_GetSessionScreen_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *taskServiceClient) SendToTask(ctx context.Context, in *SendToTaskRequest, opts ...grpc.CallOption) (*SendToTaskResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(SendToTaskResponse)
@@ -149,6 +162,8 @@ type TaskServiceServer interface {
 	PauseTask(context.Context, *PauseTaskRequest) (*Task, error)
 	ResumeTask(context.Context, *ResumeTaskRequest) (*Task, error)
 	SummarizeTask(context.Context, *SummarizeTaskRequest) (*TaskSummary, error)
+	// GetSessionScreen shows what the task's session terminal shows right now.
+	GetSessionScreen(context.Context, *GetSessionScreenRequest) (*SessionScreen, error)
 	// SendToTask delivers a message into the task's Claude session (Discord
 	// /say, thread replies, coherence comments). Queued while the session is
 	// not running; delivered when it next starts.
@@ -183,6 +198,9 @@ func (UnimplementedTaskServiceServer) ResumeTask(context.Context, *ResumeTaskReq
 }
 func (UnimplementedTaskServiceServer) SummarizeTask(context.Context, *SummarizeTaskRequest) (*TaskSummary, error) {
 	return nil, status.Error(codes.Unimplemented, "method SummarizeTask not implemented")
+}
+func (UnimplementedTaskServiceServer) GetSessionScreen(context.Context, *GetSessionScreenRequest) (*SessionScreen, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetSessionScreen not implemented")
 }
 func (UnimplementedTaskServiceServer) SendToTask(context.Context, *SendToTaskRequest) (*SendToTaskResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method SendToTask not implemented")
@@ -334,6 +352,24 @@ func _TaskService_SummarizeTask_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TaskService_GetSessionScreen_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetSessionScreenRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TaskServiceServer).GetSessionScreen(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TaskService_GetSessionScreen_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TaskServiceServer).GetSessionScreen(ctx, req.(*GetSessionScreenRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _TaskService_SendToTask_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(SendToTaskRequest)
 	if err := dec(in); err != nil {
@@ -386,6 +422,10 @@ var TaskService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SummarizeTask",
 			Handler:    _TaskService_SummarizeTask_Handler,
+		},
+		{
+			MethodName: "GetSessionScreen",
+			Handler:    _TaskService_GetSessionScreen_Handler,
 		},
 		{
 			MethodName: "SendToTask",

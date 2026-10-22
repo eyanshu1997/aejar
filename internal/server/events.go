@@ -22,6 +22,22 @@ const channelGrace = 2 * time.Minute
 
 var eventKinds = map[string]bool{"chat": true, "comment": true, "action_result": true}
 
+// GetSessionScreen shows the session terminal of a running task.
+func (s *Server) GetSessionScreen(ctx context.Context, req *aejarv1.GetSessionScreenRequest) (*aejarv1.SessionScreen, error) {
+	t, err := s.loadTask(ctx, req.Id)
+	if err != nil {
+		return nil, err
+	}
+	if t.State != aejarv1.TaskState_TASK_STATE_RUNNING {
+		return &aejarv1.SessionScreen{Text: "No session is running for this task (" + strings.ToLower(strings.TrimPrefix(t.State.String(), "TASK_STATE_")) + ").", Live: false}, nil
+	}
+	text, err := s.Runner.Screen(ctx, req.Id, int(req.HistoryLines))
+	if err != nil {
+		return &aejarv1.SessionScreen{Text: "Session is starting or unreachable: " + err.Error(), Live: false}, nil
+	}
+	return &aejarv1.SessionScreen{Text: text, Live: true}, nil
+}
+
 // SendToTask queues a message for the task's session and delivers it now if
 // the session is running.
 func (s *Server) SendToTask(ctx context.Context, req *aejarv1.SendToTaskRequest) (*aejarv1.SendToTaskResponse, error) {

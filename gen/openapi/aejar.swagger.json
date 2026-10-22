@@ -445,6 +445,44 @@
         ]
       }
     },
+    "/v1/tasks/{id}/screen": {
+      "get": {
+        "summary": "GetSessionScreen shows what the task's session terminal shows right now.",
+        "operationId": "TaskService_GetSessionScreen",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1SessionScreen"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googleRpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "historyLines",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "TaskService"
+        ]
+      }
+    },
     "/v1/tasks/{id}/summary": {
       "get": {
         "operationId": "TaskService_SummarizeTask",
@@ -1016,6 +1054,18 @@
         "delivered": {
           "type": "boolean",
           "description": "True when delivered now; false when queued for the next session start."
+        }
+      }
+    },
+    "v1SessionScreen": {
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string"
+        },
+        "live": {
+          "type": "boolean",
+          "description": "False when the task has no running session."
         }
       }
     },

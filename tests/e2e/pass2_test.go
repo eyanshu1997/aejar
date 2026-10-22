@@ -225,3 +225,52 @@ func TestUIPageServedAndDataNeedsAuth(t *testing.T) {
 		t.Fatalf("api without auth: %d", code)
 	}
 }
+
+func TestSessionScreen(t *testing.T) {
+	e := setup(t)
+	id, sess := e.startTask("t", "plan")
+	e.rec.SetScreen("❯ working on step 2")
+	got := e.must("GET", "/v1/tasks/"+id+"/screen", e.owner, nil)
+	if got["live"] != true || got["text"] != "❯ working on step 2" {
+		t.Fatalf("screen: %v", got)
+	}
+	// Sessions cannot read screens (their own or others').
+	if code, _ := e.call("GET", "/v1/tasks/"+id+"/screen", sess, nil); code != http.StatusForbidden {
+		t.Fatalf("session reading a screen: %d", code)
+	}
+	e.must("POST", "/v1/tasks/"+id+":pause", e.owner, map[string]any{})
+	if got := e.must("GET", "/v1/tasks/"+id+"/screen", e.owner, nil); got["live"] == true {
+		t.Fatal("paused task reported a live screen")
+	}
+}
+
+func TestAuditCarriesReadableDetail(t *testing.T) {
+	e := setup(t)
+	id, sess := e.startTask("t", "mail")
+	e.preTool(sess, "Bash", map[string]any{"command": "ls -la /work", "description": "List files"})
+	e.preTool(sess, "mcp__claude_ai_Gmail__search_threads", map[string]any{"query": "salary slip from hr"})
+	e.must("POST", "/hooks/claude/stop", sess, map[string]any{"last_assistant_message": "Found 3 files."})
+	events := e.must("GET", "/v1/audit?subject="+id+"&limit=100", e.owner, nil)["events"].([]any)
+	var bashSummary, gmailSummary, reply any
+	for _, ev := range events {
+		m := ev.(map[string]any)
+		p := m["payload"].(map[string]any)
+		switch {
+		case m["action"] == "tool.pass" && p["tool"] == "Bash":
+			bashSummary = p["summary"]
+		case m["action"] == "tool.pass" && p["tool"] == "mcp__claude_ai_Gmail__search_threads":
+			gmailSummary = p["summary"]
+		case m["action"] == "session.idle":
+			reply = p["reply"]
+		}
+	}
+	if bashSummary != "command: ls -la /work | description: List files" {
+		t.Errorf("bash summary: %v", bashSummary)
+	}
+	if gmailSummary != nil {
+		t.Errorf("private connector input leaked into the audit summary: %v", gmailSummary)
+	}
+	if reply != "Found 3 files." {
+		t.Errorf("reply: %v", reply)
+	}
+}

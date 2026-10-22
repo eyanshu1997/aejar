@@ -5,73 +5,188 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>aejar</title>
 <style>
-  :root { --bg:#f7f7f5; --fg:#1d1d1b; --muted:#6b6b66; --card:#fff; --line:#e3e2dd; --accent:#2f5d50; --warn:#9a3b1e; }
-  @media (prefers-color-scheme: dark) { :root { --bg:#151514; --fg:#ecebe6; --muted:#9a9993; --card:#1f1f1d; --line:#33322f; --accent:#7fb8a4; --warn:#e48a68; } }
-  * { box-sizing: border-box; }
-  body { margin:0; background:var(--bg); color:var(--fg); font:15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
-  header { display:flex; gap:16px; align-items:baseline; flex-wrap:wrap; padding:16px; border-bottom:1px solid var(--line); }
-  header h1 { margin:0; font-size:20px; letter-spacing:.02em; }
-  #status { color:var(--muted); font-size:14px; }
-  main { max-width:1100px; margin:0 auto; padding:16px; display:grid; gap:20px; }
-  section { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:14px 16px; overflow-x:auto; }
-  h2 { font-size:15px; margin:0 0 10px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
-  table { width:100%; border-collapse:collapse; font-size:14px; }
-  th, td { text-align:left; padding:6px 8px; border-bottom:1px solid var(--line); vertical-align:top; }
-  th { color:var(--muted); font-weight:500; }
+  :root { --bg:#f7f7f5; --fg:#1d1d1b; --muted:#6b6b66; --card:#fff; --line:#e3e2dd; --accent:#2f5d50; --warn:#9a3b1e; --term:#111210; --termfg:#d9e0d6; --sel:#e9f0ec; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#151514; --fg:#ecebe6; --muted:#9a9993; --card:#1f1f1d; --line:#33322f; --accent:#7fb8a4; --warn:#e48a68; --term:#0b0c0b; --termfg:#d9e0d6; --sel:#26302c; } }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif; }
+  header { display:flex; gap:16px; align-items:baseline; flex-wrap:wrap; padding:12px 16px; border-bottom:1px solid var(--line); position:sticky; top:0; background:var(--bg); z-index:1; }
+  header h1 { margin:0; font-size:20px; }
+  #status { color:var(--muted); font-size:14px; } #err { color:var(--warn); font-size:14px; }
+  main { display:grid; grid-template-columns:minmax(280px,360px) 1fr; gap:16px; padding:16px; max-width:1400px; margin:0 auto; }
+  @media (max-width:860px) { main { grid-template-columns:1fr; } }
+  section { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:12px 14px; margin-bottom:16px; min-width:0; }
+  h2 { font-size:13px; margin:0 0 10px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
+  h3 { margin:0; font-size:18px; }
   button { font:inherit; font-size:13px; padding:4px 10px; border-radius:6px; border:1px solid var(--line); background:var(--bg); color:var(--fg); cursor:pointer; }
-  button.primary { background:var(--accent); color:var(--card); border-color:var(--accent); }
-  button.danger { color:var(--warn); }
+  button.primary { background:var(--accent); color:var(--card); border-color:var(--accent); } button.danger { color:var(--warn); }
   input, textarea, select { font:inherit; font-size:14px; padding:6px 8px; border:1px solid var(--line); border-radius:6px; background:var(--bg); color:var(--fg); width:100%; }
-  textarea { min-height:60px; }
-  form { display:grid; gap:8px; }
-  .row { display:flex; gap:8px; flex-wrap:wrap; }
-  .row > * { flex:1; min-width:120px; }
-  .approval { border:1px solid var(--line); border-radius:6px; padding:10px; margin-bottom:10px; }
-  pre { margin:8px 0; padding:8px; background:var(--bg); border-radius:6px; font-size:13px; white-space:pre-wrap; word-break:break-word; }
-  .muted { color:var(--muted); }
-  #err { color:var(--warn); }
+  textarea { min-height:56px; } form { display:grid; gap:8px; }
+  .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; } .row > input, .row > select { flex:1; min-width:110px; }
+  .task { padding:8px; border-radius:6px; cursor:pointer; border:1px solid transparent; }
+  .task:hover { border-color:var(--line); } .task.sel { background:var(--sel); }
+  .badge { font-size:12px; padding:1px 7px; border-radius:10px; border:1px solid var(--line); color:var(--muted); white-space:nowrap; }
+  .badge.running { color:var(--accent); border-color:var(--accent); } .badge.waiting { color:var(--warn); border-color:var(--warn); }
+  .muted { color:var(--muted); font-size:13px; }
+  pre { margin:0; white-space:pre-wrap; word-break:break-word; font:12.5px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace; }
+  .term { background:var(--term); color:var(--termfg); padding:10px; border-radius:6px; max-height:420px; overflow:auto; }
+  .approval { border:1px solid var(--warn); border-radius:6px; padding:10px; margin-bottom:10px; }
+  .approval pre { background:var(--bg); padding:8px; border-radius:6px; margin:8px 0; }
+  .ev { border-bottom:1px solid var(--line); padding:6px 0; }
+  .ev summary { cursor:pointer; list-style:none; display:flex; gap:10px; flex-wrap:wrap; align-items:baseline; }
+  .ev summary::-webkit-details-marker { display:none; }
+  .ev .act { font-weight:600; } .ev .what { color:var(--fg); }
+  .ev pre { background:var(--bg); padding:8px; border-radius:6px; margin-top:6px; }
+  .reply { white-space:pre-wrap; background:var(--bg); border-left:3px solid var(--accent); padding:6px 10px; margin-top:4px; border-radius:4px; }
 </style>
 </head>
 <body>
 <header><h1>aejar</h1><span id="status">loading…</span><span id="err"></span></header>
 <main>
-  <section><h2>Pending approvals</h2><div id="approvals" class="muted">none</div></section>
-  <section><h2>Tasks</h2>
-    <table><thead><tr><th>Task</th><th>State</th><th>Class</th><th>Score</th><th>Profile</th><th></th></tr></thead><tbody id="tasks"></tbody></table>
-  </section>
-  <section><h2>New task</h2>
-    <form id="newtask">
-      <input name="title" placeholder="Title" required>
-      <textarea name="prompt" placeholder="What should the session do?"></textarea>
-      <div class="row">
-        <select name="class"><option value="TASK_CLASS_P1">P1 normal</option><option value="TASK_CLASS_P0">P0 now</option><option value="TASK_CLASS_P2">P2 background</option><option value="TASK_CLASS_P3">P3 housekeeping</option></select>
-        <select name="profile"><option>plan</option><option>research</option><option>action</option><option>mail</option><option>project</option></select>
-        <button class="primary" type="submit">Create</button>
-      </div>
-    </form>
-  </section>
-  <section><h2>Message a task</h2>
-    <form id="say"><div class="row"><select name="id" id="sayTask"></select><input name="text" placeholder="Message for the session" required><button type="submit">Send</button></div></form>
-  </section>
-  <section><h2>Audit (latest)</h2>
-    <table><tbody id="audit"></tbody></table>
-  </section>
+  <div>
+    <section><h2>Tasks</h2><div id="tasks" class="muted">none yet</div></section>
+    <section><h2>New task</h2>
+      <form id="newtask">
+        <input name="title" placeholder="Title" required>
+        <textarea name="prompt" placeholder="What should the session do?"></textarea>
+        <div class="row">
+          <select name="class"><option value="TASK_CLASS_P1">P1 normal</option><option value="TASK_CLASS_P0">P0 now</option><option value="TASK_CLASS_P2">P2 background</option><option value="TASK_CLASS_P3">P3 housekeeping</option></select>
+          <select name="profile"><option>plan</option><option>research</option><option>action</option><option>mail</option><option>project</option></select>
+        </div>
+        <button class="primary" type="submit">Create task</button>
+      </form>
+    </section>
+  </div>
+  <div>
+    <section id="approvalsBox"><h2>Waiting for your approval</h2><div id="approvals" class="muted">nothing waiting</div></section>
+    <section id="detail"><h2>Task</h2><div class="muted">Select a task to see its live session and activity.</div></section>
+    <section><h2>Audit log</h2>
+      <div class="row" style="margin-bottom:8px"><input id="auditFilter" placeholder="Filter: task id, actor, action or text (e.g. tool.denied, Bash, t-…)"><span class="muted" id="auditCount"></span></div>
+      <div id="audit"></div>
+    </section>
+  </div>
 </main>
 <script>
-const short = s => (s || '').replace(/^(TASK_STATE_|TASK_CLASS_|APPROVAL_CLASS_|APPROVAL_STATE_)/, '').toLowerCase();
+const $ = (id) => document.getElementById(id);
+const short = (s) => (s || '').replace(/^(TASK_STATE_|TASK_CLASS_|APPROVAL_CLASS_|APPROVAL_STATE_)/, '').toLowerCase();
+const when = (ts) => new Date(ts).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' });
 function el(tag, props = {}, ...kids) {
   const e = document.createElement(tag);
-  for (const [k, v] of Object.entries(props)) { if (k === 'onclick') e.onclick = v; else e.setAttribute(k, v); }
-  for (const k of kids) e.append(k instanceof Node ? k : document.createTextNode(String(k ?? '')));
+  for (const [k, v] of Object.entries(props)) { if (k.startsWith('on')) e[k] = v; else if (v !== undefined && v !== null && v !== false) e.setAttribute(k, v); }
+  for (const k of kids.flat()) if (k !== undefined && k !== null && k !== '') e.append(k instanceof Node ? k : document.createTextNode(String(k)));
   return e;
 }
 async function api(method, path, body) {
   const r = await fetch(path, { method, headers: { 'content-type': 'application/json' }, body: body ? JSON.stringify(body) : undefined, credentials: 'same-origin' });
-  const t = await r.text(); const d = t ? JSON.parse(t) : {};
+  const t = await r.text(); let d = {}; try { d = t ? JSON.parse(t) : {}; } catch { d = { message: t }; }
   if (!r.ok) throw new Error(d.message || r.status);
   return d;
 }
-function report(e) { document.getElementById('err').textContent = e ? String(e.message || e) : ''; }
+const report = (e) => { $('err').textContent = e ? String(e.message || e) : ''; };
+
+// Plain-language line for an audit event.
+function describe(ev) {
+  const p = ev.payload || {};
+  const map = {
+    'task.created': () => `created "${p.title}" (${short(p.class)}, ${p.profile})`,
+    'task.started': () => p.resume ? 'session resumed' : 'session started',
+    'task.stopped': () => `session stopped → ${short(p.to)}: ${p.why || ''}`,
+    'task.start_failed': () => `could not start session: ${p.error}`,
+    'task.woken': () => 'back in the queue',
+    'task.paused': () => 'paused', 'task.resumed': () => 'resumed', 'task.priority': () => `priority bump ${p.user_bump}`,
+    'session.started': () => `Claude session ${p.source || ''} ${p.claude_session_id ? '(' + p.claude_session_id.slice(0, 8) + ')' : ''}`,
+    'session.channel_ready': () => 'message channel connected', 'session.channel_unavailable': () => `message channel unavailable: ${p.message || ''}`,
+    'session.sensitive': () => 'read private data → web access off for this session',
+    'session.idle': () => 'finished its turn', 'session.reply': () => 'replied (waiting for you)',
+    'session.error': () => `error: ${p.error || ''} ${p.message || ''}`, 'session.ended': () => `ended ${p.reason || ''}`,
+    'session.notification': () => `${p.type || 'notification'}: ${p.message || ''}`,
+    'tool.pass': () => `${p.tool} ${p.summary ? '— ' + p.summary : ''}`,
+    'tool.used': () => `${p.tool} done`,
+    'tool.denied': () => `BLOCKED ${p.tool}: ${p.reason || ''}`,
+    'tool.needs_approval': () => `HELD for approval ${p.tool}: ${p.summary || ''}`,
+    'tool.allowed_once': () => `${p.tool} ran with approval ${p.approval}`,
+    'approval.requested': () => `asked: ${p.summary || ''}`,
+    'approval.decided': () => `${p.approved ? 'approved' : 'rejected'} ${p.reason ? '(' + p.reason + ')' : ''}`,
+    'event.queued': () => `message queued: ${p.text || ''}`, 'event.delivered': () => `message delivered via ${p.via}`,
+    'limit.hit': () => `usage limit, paused until ${p.blocked_until}`,
+  };
+  return (map[ev.action] || (() => ''))();
+}
+function eventRow(ev, open) {
+  const p = ev.payload || {};
+  const sev = /denied|needs_approval|error|failed|limit/.test(ev.action) ? 'color:var(--warn)' : '';
+  return el('details', { class: 'ev', open },
+    el('summary', {}, el('span', { class: 'muted' }, when(ev.ts)), el('span', { class: 'act', style: sev }, ev.action),
+      el('span', { class: 'what' }, describe(ev)), el('span', { class: 'muted' }, `${ev.actor} · ${ev.subject}`)),
+    p.reply ? el('div', { class: 'reply' }, p.reply) : '',
+    el('pre', {}, JSON.stringify({ seq: ev.seq, actor: ev.actor, action: ev.action, subject: ev.subject, ...p }, null, 2)));
+}
+
+let selected = new URLSearchParams(location.hash.slice(1)).get('task') || '';
+let tasksCache = [], auditCache = [], approvalsCache = [];
+
+function renderTasks() {
+  const box = $('tasks'); box.replaceChildren();
+  if (!tasksCache.length) { box.textContent = 'none yet'; return; }
+  for (const t of tasksCache) {
+    const st = short(t.state);
+    box.append(el('div', { class: 'task' + (t.id === selected ? ' sel' : ''), onclick: () => select(t.id) },
+      el('div', { class: 'row' }, el('strong', {}, t.title), el('span', { class: 'badge ' + st }, st + (t.waitReason ? ` · ${t.waitReason}` : ''))),
+      el('div', { class: 'muted' }, `${t.id} · ${short(t.class)} · ${t.profile} · score ${t.score ?? 0}`)));
+  }
+}
+function approvalCard(a) {
+  return el('div', { class: 'approval' },
+    el('div', {}, el('strong', {}, a.summary)),
+    el('div', { class: 'muted' }, `${short(a.class)} · task ${a.taskId || '—'} · ${a.id} · expires ${when(a.expiresAt)}`),
+    a.toolName ? el('div', { class: 'muted' }, 'exact call: ' + a.toolName) : '',
+    el('pre', {}, JSON.stringify(a.payload || {}, null, 2)),
+    el('div', { class: 'row' },
+      el('button', { class: 'primary', onclick: () => decide(a, true) }, 'Approve exactly this'),
+      el('button', { class: 'danger', onclick: () => decide(a, false) }, 'Reject…')));
+}
+function renderApprovals() {
+  const box = $('approvals'); box.replaceChildren();
+  if (!approvalsCache.length) { box.textContent = 'nothing waiting'; return; }
+  approvalsCache.forEach((a) => box.append(approvalCard(a)));
+}
+function renderAudit() {
+  const q = $('auditFilter').value.trim().toLowerCase();
+  const rows = auditCache.filter((ev) => !q || JSON.stringify(ev).toLowerCase().includes(q) || describe(ev).toLowerCase().includes(q));
+  $('auditCount').textContent = `${rows.length} of ${auditCache.length}`;
+  $('audit').replaceChildren(...rows.slice(-150).reverse().map((ev) => eventRow(ev, false)));
+}
+
+async function renderDetail() {
+  const box = $('detail');
+  const t = tasksCache.find((x) => x.id === selected);
+  if (!t) { box.replaceChildren(el('h2', {}, 'Task'), el('div', { class: 'muted' }, 'Select a task to see its live session and activity.')); return; }
+  const st = short(t.state);
+  const [screen, sum] = await Promise.all([
+    api('GET', `/v1/tasks/${t.id}/screen?historyLines=300`).catch((e) => ({ text: String(e.message || e) })),
+    api('GET', `/v1/tasks/${t.id}/summary`).catch(() => ({})),
+  ]);
+  const term = el('div', { class: 'term' }, el('pre', {}, (screen.text || '').replace(/\s+$/, '')));
+  const events = auditCache.filter((ev) => ev.subject === t.id || (ev.payload && ev.payload.task === t.id));
+  const actBtn = st === 'paused' ? el('button', { onclick: () => act(t.id, 'resume') }, 'Resume')
+    : ['running', 'queued', 'waiting'].includes(st) ? el('button', { onclick: () => act(t.id, 'pause') }, 'Pause') : '';
+  const say = el('form', { onsubmit: async (e) => { e.preventDefault(); const text = e.target.text.value;
+      try { const r = await api('POST', `/v1/tasks/${t.id}:say`, { text }); e.target.reset(); report(r.delivered ? null : 'Queued: delivered when the session runs.'); refresh(); } catch (err) { report(err); } } },
+    el('div', { class: 'row' }, el('input', { name: 'text', placeholder: 'Message the session…', required: true }), el('button', { type: 'submit' }, 'Send')));
+  const scrolledToEnd = !box.querySelector('.term') || (box.querySelector('.term').scrollTop + box.querySelector('.term').clientHeight >= box.querySelector('.term').scrollHeight - 30);
+  box.replaceChildren(
+    el('h2', {}, 'Task'),
+    el('div', { class: 'row' }, el('h3', {}, t.title), el('span', { class: 'badge ' + st }, st + (t.waitReason ? ` · ${t.waitReason}` : '')), actBtn),
+    el('div', { class: 'muted' }, `${t.id} · ${short(t.class)} · ${t.profile}${t.claudeSessionId ? ' · claude ' + t.claudeSessionId.slice(0, 8) : ''}`),
+    t.prompt ? el('div', { class: 'reply', style: 'border-left-color:var(--muted)' }, t.prompt) : '',
+    el('h2', { style: 'margin-top:14px' }, screen.live ? 'Live session (refreshes every 3s)' : 'Session'),
+    term,
+    (sum.pendingApprovals || []).length ? el('h2', { style: 'margin-top:14px' }, 'This task is waiting for you') : '',
+    ...(sum.pendingApprovals || []).map(approvalCard),
+    el('h2', { style: 'margin-top:14px' }, 'Message the session'), say,
+    el('h2', { style: 'margin-top:14px' }, `Activity (${events.length})`),
+    el('div', {}, events.slice().reverse().map((ev) => eventRow(ev, false))));
+  const nt = box.querySelector('.term'); if (scrolledToEnd) nt.scrollTop = nt.scrollHeight;
+}
 
 async function refresh() {
   try {
@@ -80,56 +195,28 @@ async function refresh() {
       api('GET', '/v1/approvals?states=APPROVAL_STATE_PENDING'), api('GET', '/v1/audit?limit=1000'),
     ]);
     let s = `cap ${st.cap ?? 0} · running ${st.running ?? 0} · queued ${st.queued ?? 0} · waiting ${st.waiting ?? 0} · approvals ${st.pendingApprovals ?? 0}`;
-    if (st.limitBlockedUntil) s += ` · usage limit until ${new Date(st.limitBlockedUntil).toLocaleTimeString()}`;
-    document.getElementById('status').textContent = s;
-
-    const tb = document.getElementById('tasks'); tb.replaceChildren();
-    const sel = document.getElementById('sayTask'); const keep = sel.value; sel.replaceChildren();
-    for (const t of tasks.tasks || []) {
-      const st = short(t.state);
-      const act = st === 'paused' ? el('button', { onclick: () => act2('resume', t.id) }, 'resume')
-        : ['running', 'queued', 'waiting'].includes(st) ? el('button', { onclick: () => act2('pause', t.id) }, 'pause') : '';
-      tb.append(el('tr', {}, el('td', {}, t.title, el('div', { class: 'muted' }, t.id)), el('td', {}, st + (t.waitReason ? ` (${t.waitReason})` : '')),
-        el('td', {}, short(t.class)), el('td', {}, t.score ?? 0), el('td', {}, t.profile), el('td', {}, act)));
-      sel.append(el('option', { value: t.id }, `${t.title} (${t.id})`));
-    }
-    if (keep) sel.value = keep;
-
-    const ab = document.getElementById('approvals'); ab.replaceChildren();
-    const list = appr.approvals || [];
-    if (!list.length) ab.textContent = 'none';
-    for (const a of list) {
-      ab.append(el('div', { class: 'approval' },
-        el('div', {}, el('strong', {}, a.summary), ' ', el('span', { class: 'muted' }, `${short(a.class)} · ${a.taskId || 'no task'} · ${a.id}`)),
-        a.toolName ? el('div', { class: 'muted' }, 'tool: ' + a.toolName) : '',
-        el('pre', {}, JSON.stringify(a.payload || {}, null, 2)),
-        el('div', { class: 'row' },
-          el('button', { class: 'primary', onclick: () => decide(a, true) }, 'Approve exactly this'),
-          el('button', { class: 'danger', onclick: () => decide(a, false) }, 'Reject'))));
-    }
-
-    const au = document.getElementById('audit'); au.replaceChildren();
-    for (const ev of (audit.events || []).slice(-25).reverse()) {
-      au.append(el('tr', {}, el('td', { class: 'muted' }, new Date(ev.ts).toLocaleString()), el('td', {}, ev.actor), el('td', {}, ev.action), el('td', {}, ev.subject)));
-    }
-    report(null);
+    if (st.limitBlockedUntil) s += ` · usage limit until ${when(st.limitBlockedUntil)}`;
+    $('status').textContent = s;
+    tasksCache = tasks.tasks || []; approvalsCache = appr.approvals || []; auditCache = audit.events || [];
+    renderTasks(); renderApprovals(); renderAudit(); await renderDetail(); report(null);
   } catch (e) { report(e); }
 }
-async function act2(verb, id) { try { await api('POST', `/v1/tasks/${id}:${verb}`, {}); refresh(); } catch (e) { report(e); } }
+function select(id) { selected = id; location.hash = 'task=' + id; renderTasks(); renderDetail(); }
+async function act(id, verb) { try { await api('POST', `/v1/tasks/${id}:${verb}`, {}); refresh(); } catch (e) { report(e); } }
 async function decide(a, approve) {
-  const reason = approve ? '' : prompt('Reason for rejecting (sent to the session):') ?? '';
-  if (!approve && reason === '') return;
+  let reason = '';
+  if (!approve) { reason = prompt('Why are you rejecting this? (sent to the session)') ?? ''; if (!reason) return; }
+  else if (!confirm(`Approve exactly this ${a.toolName || short(a.class)}?\n\n${JSON.stringify(a.payload || {}, null, 2).slice(0, 800)}`)) return;
   try { await api('POST', `/v1/approvals/${a.id}:decide`, { approve, reason, payloadHash: a.payloadHash }); refresh(); } catch (e) { report(e); }
 }
-document.getElementById('newtask').onsubmit = async (ev) => {
-  ev.preventDefault(); const f = new FormData(ev.target);
-  try { await api('POST', '/v1/tasks', Object.fromEntries(f)); ev.target.reset(); refresh(); } catch (e) { report(e); }
+$('newtask').onsubmit = async (ev) => {
+  ev.preventDefault();
+  try { const t = await api('POST', '/v1/tasks', Object.fromEntries(new FormData(ev.target))); ev.target.reset(); select(t.id); refresh(); } catch (e) { report(e); }
 };
-document.getElementById('say').onsubmit = async (ev) => {
-  ev.preventDefault(); const f = Object.fromEntries(new FormData(ev.target));
-  try { const r = await api('POST', `/v1/tasks/${f.id}:say`, { text: f.text }); ev.target.text.value = ''; report(r.delivered ? null : 'queued: delivered when the session runs'); refresh(); } catch (e) { report(e); }
-};
-refresh(); setInterval(refresh, 10000);
+$('auditFilter').oninput = renderAudit;
+refresh();
+setInterval(refresh, 10000);
+setInterval(() => { if (selected && !document.hidden) renderDetail().catch(report); }, 3000);
 </script>
 </body>
 </html>

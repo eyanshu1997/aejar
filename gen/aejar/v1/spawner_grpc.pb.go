@@ -19,10 +19,11 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	SpawnerService_StartSession_FullMethodName = "/aejar.v1.SpawnerService/StartSession"
-	SpawnerService_StopSession_FullMethodName  = "/aejar.v1.SpawnerService/StopSession"
-	SpawnerService_SendKeys_FullMethodName     = "/aejar.v1.SpawnerService/SendKeys"
-	SpawnerService_ListSessions_FullMethodName = "/aejar.v1.SpawnerService/ListSessions"
+	SpawnerService_StartSession_FullMethodName  = "/aejar.v1.SpawnerService/StartSession"
+	SpawnerService_StopSession_FullMethodName   = "/aejar.v1.SpawnerService/StopSession"
+	SpawnerService_SendKeys_FullMethodName      = "/aejar.v1.SpawnerService/SendKeys"
+	SpawnerService_ListSessions_FullMethodName  = "/aejar.v1.SpawnerService/ListSessions"
+	SpawnerService_CaptureScreen_FullMethodName = "/aejar.v1.SpawnerService/CaptureScreen"
 )
 
 // SpawnerServiceClient is the client API for SpawnerService service.
@@ -39,6 +40,8 @@ type SpawnerServiceClient interface {
 	// SendKeys is the fallback input path when the channel is unavailable.
 	SendKeys(ctx context.Context, in *SendKeysRequest, opts ...grpc.CallOption) (*SendKeysResponse, error)
 	ListSessions(ctx context.Context, in *ListSessionsRequest, opts ...grpc.CallOption) (*ListSessionsResponse, error)
+	// CaptureScreen returns the session terminal's current text (read-only).
+	CaptureScreen(ctx context.Context, in *CaptureScreenRequest, opts ...grpc.CallOption) (*CaptureScreenResponse, error)
 }
 
 type spawnerServiceClient struct {
@@ -89,6 +92,16 @@ func (c *spawnerServiceClient) ListSessions(ctx context.Context, in *ListSession
 	return out, nil
 }
 
+func (c *spawnerServiceClient) CaptureScreen(ctx context.Context, in *CaptureScreenRequest, opts ...grpc.CallOption) (*CaptureScreenResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CaptureScreenResponse)
+	err := c.cc.Invoke(ctx, SpawnerService_CaptureScreen_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SpawnerServiceServer is the server API for SpawnerService service.
 // All implementations must embed UnimplementedSpawnerServiceServer
 // for forward compatibility.
@@ -103,6 +116,8 @@ type SpawnerServiceServer interface {
 	// SendKeys is the fallback input path when the channel is unavailable.
 	SendKeys(context.Context, *SendKeysRequest) (*SendKeysResponse, error)
 	ListSessions(context.Context, *ListSessionsRequest) (*ListSessionsResponse, error)
+	// CaptureScreen returns the session terminal's current text (read-only).
+	CaptureScreen(context.Context, *CaptureScreenRequest) (*CaptureScreenResponse, error)
 	mustEmbedUnimplementedSpawnerServiceServer()
 }
 
@@ -124,6 +139,9 @@ func (UnimplementedSpawnerServiceServer) SendKeys(context.Context, *SendKeysRequ
 }
 func (UnimplementedSpawnerServiceServer) ListSessions(context.Context, *ListSessionsRequest) (*ListSessionsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListSessions not implemented")
+}
+func (UnimplementedSpawnerServiceServer) CaptureScreen(context.Context, *CaptureScreenRequest) (*CaptureScreenResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CaptureScreen not implemented")
 }
 func (UnimplementedSpawnerServiceServer) mustEmbedUnimplementedSpawnerServiceServer() {}
 func (UnimplementedSpawnerServiceServer) testEmbeddedByValue()                        {}
@@ -218,6 +236,24 @@ func _SpawnerService_ListSessions_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SpawnerService_CaptureScreen_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CaptureScreenRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SpawnerServiceServer).CaptureScreen(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SpawnerService_CaptureScreen_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SpawnerServiceServer).CaptureScreen(ctx, req.(*CaptureScreenRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SpawnerService_ServiceDesc is the grpc.ServiceDesc for SpawnerService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -240,6 +276,10 @@ var SpawnerService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListSessions",
 			Handler:    _SpawnerService_ListSessions_Handler,
+		},
+		{
+			MethodName: "CaptureScreen",
+			Handler:    _SpawnerService_CaptureScreen_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

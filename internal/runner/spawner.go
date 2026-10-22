@@ -36,6 +36,14 @@ func (s *Spawner) Type(ctx context.Context, taskID, text string) error {
 	return err
 }
 
+func (s *Spawner) Screen(ctx context.Context, taskID string, historyLines int) (string, error) {
+	r, err := s.Client.CaptureScreen(ctx, &aejarv1.CaptureScreenRequest{TaskId: taskID, HistoryLines: int32(historyLines)})
+	if err != nil {
+		return "", err
+	}
+	return r.Text, nil
+}
+
 func (s *Spawner) Deliver(ctx context.Context, taskID string, ev Event) error {
 	line, err := json.Marshal(map[string]any{"id": ev.ID, "kind": ev.Kind, "content": ev.Content})
 	if err != nil {

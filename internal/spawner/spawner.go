@@ -270,6 +270,23 @@ func (s *Spawner) SendKeys(ctx context.Context, req *aejarv1.SendKeysRequest) (*
 	return &aejarv1.SendKeysResponse{}, nil
 }
 
+func (s *Spawner) CaptureScreen(ctx context.Context, req *aejarv1.CaptureScreenRequest) (*aejarv1.CaptureScreenResponse, error) {
+	if !taskIDRe.MatchString(req.TaskId) {
+		return nil, status.Errorf(codes.InvalidArgument, "bad task id %q", req.TaskId)
+	}
+	hist := req.HistoryLines
+	if hist < 0 || hist > 2000 {
+		hist = 200
+	}
+	// -p prints the pane as text (no escape sequences unless -e).
+	out, err := s.Exec(ctx, nil, "exec", "-u", fmt.Sprint(AgentUID), ContainerName(req.TaskId),
+		"tmux", "capture-pane", "-p", "-t", "main", "-S", fmt.Sprintf("-%d", hist))
+	if err != nil {
+		return nil, status.Errorf(codes.Unavailable, "capture: %v", err)
+	}
+	return &aejarv1.CaptureScreenResponse{Text: string(out)}, nil
+}
+
 func (s *Spawner) ListSessions(ctx context.Context, _ *aejarv1.ListSessionsRequest) (*aejarv1.ListSessionsResponse, error) {
 	out, err := s.Exec(ctx, nil, "ps", "-a", "--filter", "label=aejar.managed=true",
 		"--format", `{{.Label "aejar.task"}}	{{.Names}}	{{.State}}`)

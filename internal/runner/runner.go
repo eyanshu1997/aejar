@@ -38,6 +38,8 @@ type Runner interface {
 	// Type is the fallback input path: it types text into the session's
 	// terminal, used only when the channel never comes up.
 	Type(ctx context.Context, taskID, text string) error
+	// Screen returns the session terminal's text, read-only.
+	Screen(ctx context.Context, taskID string, historyLines int) (string, error)
 }
 
 // Call is one recorded runner call.
@@ -55,6 +57,7 @@ type Recorder struct {
 	calls      []Call
 	deliverErr error
 	startErr   error
+	screen     string
 }
 
 // SetStartErr, when set, makes Start fail.
@@ -105,6 +108,19 @@ func (r *Recorder) Type(_ context.Context, taskID, text string) error {
 	return nil
 }
 
+// SetScreen sets what Screen returns.
+func (r *Recorder) SetScreen(text string) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.screen = text
+}
+
+func (r *Recorder) Screen(_ context.Context, _ string, _ int) (string, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return r.screen, nil
+}
+
 // Calls returns a copy of the recorded calls.
 func (r *Recorder) Calls() []Call {
 	r.mu.Lock()
@@ -131,6 +147,10 @@ func (l Log) Stop(_ context.Context, taskID, reason string) error {
 func (l Log) Deliver(_ context.Context, taskID string, ev Event) error {
 	l.Logf("runner: would deliver %s event %s to task %s", ev.Kind, ev.ID, taskID)
 	return nil
+}
+
+func (l Log) Screen(_ context.Context, taskID string, _ int) (string, error) {
+	return "(no session runner configured)", nil
 }
 
 func (l Log) Type(_ context.Context, taskID, _ string) error {

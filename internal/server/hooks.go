@@ -29,13 +29,18 @@ func (s *Server) ClaudeHook(ctx context.Context, req *aejarv1.ClaudeHookRequest)
 		return s.preTool(ctx, p, req)
 	case "post-tool":
 		payload := map[string]any{"tool": req.ToolName, "input_hash": inputHash(req)}
+		if req.ToolInput != nil {
+			if sum := inputSummary(req.ToolName, req.ToolInput.AsMap()); sum != "" {
+				payload["summary"] = sum
+			}
+		}
 		if req.ToolName == "SendMessage" && req.ToolInput != nil {
 			// Messages between agents are part of the decision record.
 			payload["input"] = req.ToolInput.AsMap()
 		}
 		s.audit(ctx, p.Name, "tool.used", p.TaskID, payload)
 	case "stop":
-		return &aejarv1.ClaudeHookResponse{}, s.onStop(ctx, p)
+		return &aejarv1.ClaudeHookResponse{}, s.onStop(ctx, p, req.LastAssistantMessage)
 	case "stop-failure":
 		return &aejarv1.ClaudeHookResponse{}, s.onStopFailure(ctx, p, req)
 	case "session-start":
@@ -68,6 +73,32 @@ func (s *Server) ClaudeHook(ctx context.Context, req *aejarv1.ClaudeHookRequest)
 	return &aejarv1.ClaudeHookResponse{}, nil
 }
 
+// summaryFields are the input fields that say what a tool call does.
+var summaryFields = []string{"command", "file_path", "notebook_path", "url", "query", "pattern", "path", "description", "summary", "to", "name"}
+
+// inputSummary is a short, human-readable line for the audit log. Connector
+// calls (mail, drive) are left out: their inputs may carry private data, and
+// the hash is enough to match an approval.
+func inputSummary(tool string, input map[string]any) string {
+	if strings.HasPrefix(tool, "mcp__claude_ai_") {
+		return ""
+	}
+	var parts []string
+	for _, f := range summaryFields {
+		if v, ok := input[f].(string); ok && v != "" {
+			parts = append(parts, f+": "+v)
+		}
+	}
+	return truncate(strings.Join(parts, " | "), 300)
+}
+
+func truncate(s string, n int) string {
+	if len(s) <= n {
+		return s
+	}
+	return s[:n] + "…"
+}
+
 func inputHash(req *aejarv1.ClaudeHookRequest) string {
 	input := map[string]any{}
 	if req.ToolInput != nil {
@@ -87,6 +118,9 @@ func (s *Server) preTool(ctx context.Context, p auth.Principal, req *aejarv1.Cla
 	})
 	hash := inputHash(req)
 	record := map[string]any{"tool": req.ToolName, "tier": d.Classification.Tier.String(), "input_hash": hash}
+	if sum := inputSummary(req.ToolName, input); sum != "" {
+		record["summary"] = sum
+	}
 
 	switch d.Verdict {
 	case policy.Pass:
@@ -147,16 +181,19 @@ func (s *Server) consumeAllowOnce(ctx context.Context, taskID, tool, hash string
 
 // onStop runs when a session goes idle. A session idle while it waits on the
 // owner gives its slot back.
-func (s *Server) onStop(ctx context.Context, p auth.Principal) error {
+func (s *Server) onStop(ctx context.Context, p auth.Principal, reply string) error {
 	var pending int
 	if err := s.DB.QueryRowContext(ctx, `SELECT COUNT(*) FROM approvals WHERE task_id = ? AND state = ?`,
 		p.TaskID, aejarv1.ApprovalState_APPROVAL_STATE_PENDING).Scan(&pending); err != nil {
 		return err
 	}
+	// The session's last reply is what the owner sees in the task's thread.
+	reply = truncate(reply, 3000)
 	if pending == 0 {
-		s.audit(ctx, p.Name, "session.idle", p.TaskID, nil)
+		s.audit(ctx, p.Name, "session.idle", p.TaskID, map[string]any{"reply": reply})
 		return nil
 	}
+	s.audit(ctx, p.Name, "session.reply", p.TaskID, map[string]any{"reply": reply})
 	if err := s.stopTask(ctx, p.TaskID, aejarv1.TaskState_TASK_STATE_WAITING, "approval", "waiting for owner approval"); err != nil {
 		return err
 	}
