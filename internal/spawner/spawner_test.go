@@ -184,8 +184,8 @@ func TestSessionUserCanReadConfig(t *testing.T) {
 // saved with a line break inside it; Claude Code rejected the header
 // ("contains a line break"). Token secrets never contain whitespace.
 func TestCleanTokenRemovesWrapping(t *testing.T) {
-	got := CleanToken("sk-ant-oat01-fakefirstpart\n  fakesecondpart \r\n")
-	if got != "sk-ant-oat01-fakefirstpartfakesecondpart" {
+	got := CleanToken("sk-ant-fake-firstpart\n  fakesecondpart \r\n")
+	if got != "sk-ant-fake-firstpartfakesecondpart" {
 		t.Fatalf("got %q", got)
 	}
 }
