@@ -169,7 +169,14 @@ func (b *Bot) handle(ctx context.Context, ev *aejarv1.AuditEvent) error {
 		}
 		return b.post(ctx, task, Message{Text: "▶️ session started"})
 	case "task.stopped":
+		if short(str("to")) == "done" {
+			return b.post(ctx, task, Message{Text: "🏁 done (" + str("why") + "). Reply here to reopen it."})
+		}
 		return b.post(ctx, task, Message{Text: fmt.Sprintf("⏸️ session stopped → %s: %s", short(str("to")), str("why"))})
+	case "task.complete_requested":
+		return b.post(ctx, task, Message{Text: "📝 " + clip(str("summary"), 1500)})
+	case "task.reopened":
+		return b.post(ctx, task, Message{Text: "🔁 reopened"})
 	case "task.start_failed":
 		return b.post(ctx, task, Message{Text: "⚠️ could not start the session: " + clip(str("error"), 500)})
 	case "task.woken":
@@ -345,6 +352,12 @@ func (b *Bot) Command(ctx context.Context, userID, name string, opts map[string]
 			return "No tasks."
 		}
 		return strings.Join(lines, "\n")
+	case "finish":
+		t, err := b.API.Tasks.FinishTask(ctx, &aejarv1.FinishTaskRequest{Id: opts["task"]})
+		if err != nil {
+			return "Error: " + err.Error()
+		}
+		return fmt.Sprintf("`%s` is %s.", t.Id, short(t.State.String()))
 	case "screen":
 		sc, err := b.API.Tasks.GetSessionScreen(ctx, &aejarv1.GetSessionScreenRequest{Id: opts["task"], HistoryLines: 0})
 		if err != nil {

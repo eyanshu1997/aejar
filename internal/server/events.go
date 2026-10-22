@@ -6,14 +6,17 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"path/filepath"
 	"strings"
 	"time"
 
 	aejarv1 "github.com/eyanshu1997/aejar/gen/aejar/v1"
 	"github.com/eyanshu1997/aejar/internal/auth"
 	"github.com/eyanshu1997/aejar/internal/runner"
+	"github.com/eyanshu1997/aejar/internal/transcript"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // channelGrace is how long a running session may go without its channel
@@ -22,6 +25,35 @@ const channelGrace = 2 * time.Minute
 
 var eventKinds = map[string]bool{"chat": true, "comment": true, "action_result": true}
 
+// GetTranscript returns the task's conversation from the transcripts in its
+// session home.
+func (s *Server) GetTranscript(ctx context.Context, req *aejarv1.GetTranscriptRequest) (*aejarv1.Transcript, error) {
+	if _, err := s.loadTask(ctx, req.Id); err != nil {
+		return nil, err
+	}
+	if s.SessionsDir == "" {
+		return &aejarv1.Transcript{}, nil
+	}
+	entries, err := transcript.ReadDir(filepath.Join(s.SessionsDir, req.Id, "home"))
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "transcript: %v", err)
+	}
+	limit := int(req.Limit)
+	if limit <= 0 || limit > 2000 {
+		limit = 500
+	}
+	resp := &aejarv1.Transcript{}
+	if len(entries) > limit {
+		entries, resp.Truncated = entries[len(entries)-limit:], true
+	}
+	for _, e := range entries {
+		resp.Entries = append(resp.Entries, &aejarv1.TranscriptEntry{
+			Ts: timestamppb.New(e.TS), Role: e.Role, Kind: e.Kind, Text: e.Text, Tool: e.Tool,
+		})
+	}
+	return resp, nil
+}
+
 // GetSessionScreen shows the session terminal of a running task.
 func (s *Server) GetSessionScreen(ctx context.Context, req *aejarv1.GetSessionScreenRequest) (*aejarv1.SessionScreen, error) {
 	t, err := s.loadTask(ctx, req.Id)
@@ -29,6 +61,11 @@ func (s *Server) GetSessionScreen(ctx context.Context, req *aejarv1.GetSessionSc
 		return nil, err
 	}
 	if t.State != aejarv1.TaskState_TASK_STATE_RUNNING {
+		var last string
+		s.DB.QueryRowContext(ctx, `SELECT last_screen FROM tasks WHERE id = ?`, t.Id).Scan(&last)
+		if last != "" {
+			return &aejarv1.SessionScreen{Text: last, Live: false}, nil
+		}
 		return &aejarv1.SessionScreen{Text: "No session is running for this task (" + strings.ToLower(strings.TrimPrefix(t.State.String(), "TASK_STATE_")) + ").", Live: false}, nil
 	}
 	text, err := s.Runner.Screen(ctx, req.Id, int(req.HistoryLines))
@@ -51,12 +88,23 @@ func (s *Server) SendToTask(ctx context.Context, req *aejarv1.SendToTaskRequest)
 	if !eventKinds[kind] {
 		return nil, status.Errorf(codes.InvalidArgument, "unknown kind %q", kind)
 	}
-	if _, err := s.loadTask(ctx, req.Id); err != nil {
+	t, err := s.loadTask(ctx, req.Id)
+	if err != nil {
 		return nil, err
 	}
 	id, err := s.queueEvent(ctx, auth.From(ctx).Name, req.Id, kind, req.Text)
 	if err != nil {
 		return nil, err
+	}
+	if t.State == aejarv1.TaskState_TASK_STATE_DONE || t.State == aejarv1.TaskState_TASK_STATE_FAILED {
+		// A message to a finished task reopens it; the session resumes with
+		// the same conversation and gets the message.
+		if _, err := s.DB.ExecContext(ctx, `UPDATE tasks SET state = ?, updated_at = ? WHERE id = ?`,
+			aejarv1.TaskState_TASK_STATE_QUEUED, s.Now().UnixNano(), t.Id); err != nil {
+			return nil, err
+		}
+		s.audit(ctx, auth.From(ctx).Name, "task.reopened", t.Id, nil)
+		s.Kick()
 	}
 	delivered, err := s.flushEvents(ctx, req.Id)
 	if err != nil {

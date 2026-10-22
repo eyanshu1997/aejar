@@ -73,6 +73,9 @@ var Commands = []*discordgo.ApplicationCommand{
 	{Name: "screen", Description: "What a task's session shows right now", Options: []*discordgo.ApplicationCommandOption{
 		{Type: discordgo.ApplicationCommandOptionString, Name: "task", Description: "Task id", Required: true},
 	}},
+	{Name: "finish", Description: "Mark a task done and end its session", Options: []*discordgo.ApplicationCommandOption{
+		{Type: discordgo.ApplicationCommandOptionString, Name: "task", Description: "Task id", Required: true},
+	}},
 }
 
 // Wire registers commands and routes gateway events to b.

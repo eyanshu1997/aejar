@@ -154,6 +154,28 @@ func (s *Server) ResumeTask(ctx context.Context, req *aejarv1.ResumeTaskRequest)
 	return s.loadTask(ctx, req.Id)
 }
 
+func (s *Server) FinishTask(ctx context.Context, req *aejarv1.FinishTaskRequest) (*aejarv1.Task, error) {
+	t, err := s.loadTask(ctx, req.Id)
+	if err != nil {
+		return nil, err
+	}
+	switch t.State {
+	case aejarv1.TaskState_TASK_STATE_DONE:
+	case aejarv1.TaskState_TASK_STATE_RUNNING:
+		if err := s.stopTask(ctx, t.Id, aejarv1.TaskState_TASK_STATE_DONE, "", "finished by the owner"); err != nil {
+			return nil, err
+		}
+	default:
+		if _, err := s.DB.ExecContext(ctx, `UPDATE tasks SET state = ?, updated_at = ? WHERE id = ?`,
+			aejarv1.TaskState_TASK_STATE_DONE, s.Now().UnixNano(), t.Id); err != nil {
+			return nil, err
+		}
+		s.audit(ctx, auth.From(ctx).Name, "task.finished", t.Id, nil)
+	}
+	s.Kick()
+	return s.loadTask(ctx, t.Id)
+}
+
 func (s *Server) SummarizeTask(ctx context.Context, req *aejarv1.SummarizeTaskRequest) (*aejarv1.TaskSummary, error) {
 	t, err := s.loadTask(ctx, req.Id)
 	if err != nil {

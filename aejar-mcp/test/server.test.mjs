@@ -94,6 +94,14 @@ test('channel events and approval tools', async () => {
     s.send({ jsonrpc: '2.0', id: 2, method: 'tools/call', params: { name: 'request_approval', arguments: { summary: 'send it', tool_name: 'mcp__claude_ai_Gmail__send_message', tool_input: input } } })
     const res = await s.waitFor((m) => m.id === 2)
     assert.match(res.result.content[0].text, /a-test1234 is pending/)
+    // complete_task reports to aejard with the session token.
+    s.send({ jsonrpc: '2.0', id: 3, method: 'tools/call', params: { name: 'complete_task', arguments: { summary: 'wrote plan.html' } } })
+    const done = await s.waitFor((m) => m.id === 3)
+    assert.match(done.result.content[0].text, /complete/)
+    const fin = aejard.calls.find((c) => c.url === '/hooks/claude/task-complete')
+    assert.equal(fin.auth, 'Bearer sess-token')
+    assert.equal(fin.body.message, 'wrote plan.html')
+
     const call = aejard.calls.find((c) => c.url === '/v1/approvals')
     assert.equal(call.auth, 'Bearer sess-token')
     assert.equal(call.body.class, 'APPROVAL_CLASS_ACTION')

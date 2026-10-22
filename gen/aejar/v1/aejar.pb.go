@@ -417,6 +417,235 @@ func (x *SummarizeTaskRequest) GetId() string {
 	return ""
 }
 
+type FinishTaskRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *FinishTaskRequest) Reset() {
+	*x = FinishTaskRequest{}
+	mi := &file_aejar_v1_aejar_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FinishTaskRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FinishTaskRequest) ProtoMessage() {}
+
+func (x *FinishTaskRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_aejar_v1_aejar_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FinishTaskRequest.ProtoReflect.Descriptor instead.
+func (*FinishTaskRequest) Descriptor() ([]byte, []int) {
+	return file_aejar_v1_aejar_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *FinishTaskRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+type GetTranscriptRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Id    string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// Most recent entries to return; 0 means 500.
+	Limit         int32 `protobuf:"varint,2,opt,name=limit,proto3" json:"limit,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetTranscriptRequest) Reset() {
+	*x = GetTranscriptRequest{}
+	mi := &file_aejar_v1_aejar_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetTranscriptRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetTranscriptRequest) ProtoMessage() {}
+
+func (x *GetTranscriptRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_aejar_v1_aejar_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetTranscriptRequest.ProtoReflect.Descriptor instead.
+func (*GetTranscriptRequest) Descriptor() ([]byte, []int) {
+	return file_aejar_v1_aejar_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *GetTranscriptRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *GetTranscriptRequest) GetLimit() int32 {
+	if x != nil {
+		return x.Limit
+	}
+	return 0
+}
+
+type Transcript struct {
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	Entries []*TranscriptEntry     `protobuf:"bytes,1,rep,name=entries,proto3" json:"entries,omitempty"`
+	// True when older entries were left out.
+	Truncated     bool `protobuf:"varint,2,opt,name=truncated,proto3" json:"truncated,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Transcript) Reset() {
+	*x = Transcript{}
+	mi := &file_aejar_v1_aejar_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Transcript) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Transcript) ProtoMessage() {}
+
+func (x *Transcript) ProtoReflect() protoreflect.Message {
+	mi := &file_aejar_v1_aejar_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Transcript.ProtoReflect.Descriptor instead.
+func (*Transcript) Descriptor() ([]byte, []int) {
+	return file_aejar_v1_aejar_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *Transcript) GetEntries() []*TranscriptEntry {
+	if x != nil {
+		return x.Entries
+	}
+	return nil
+}
+
+func (x *Transcript) GetTruncated() bool {
+	if x != nil {
+		return x.Truncated
+	}
+	return false
+}
+
+type TranscriptEntry struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Ts    *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=ts,proto3" json:"ts,omitempty"`
+	// user, assistant
+	Role string `protobuf:"bytes,2,opt,name=role,proto3" json:"role,omitempty"`
+	// text, tool_use, tool_result
+	Kind string `protobuf:"bytes,3,opt,name=kind,proto3" json:"kind,omitempty"`
+	Text string `protobuf:"bytes,4,opt,name=text,proto3" json:"text,omitempty"`
+	// For tool_use: the tool's name.
+	Tool          string `protobuf:"bytes,5,opt,name=tool,proto3" json:"tool,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TranscriptEntry) Reset() {
+	*x = TranscriptEntry{}
+	mi := &file_aejar_v1_aejar_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TranscriptEntry) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TranscriptEntry) ProtoMessage() {}
+
+func (x *TranscriptEntry) ProtoReflect() protoreflect.Message {
+	mi := &file_aejar_v1_aejar_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TranscriptEntry.ProtoReflect.Descriptor instead.
+func (*TranscriptEntry) Descriptor() ([]byte, []int) {
+	return file_aejar_v1_aejar_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *TranscriptEntry) GetTs() *timestamppb.Timestamp {
+	if x != nil {
+		return x.Ts
+	}
+	return nil
+}
+
+func (x *TranscriptEntry) GetRole() string {
+	if x != nil {
+		return x.Role
+	}
+	return ""
+}
+
+func (x *TranscriptEntry) GetKind() string {
+	if x != nil {
+		return x.Kind
+	}
+	return ""
+}
+
+func (x *TranscriptEntry) GetText() string {
+	if x != nil {
+		return x.Text
+	}
+	return ""
+}
+
+func (x *TranscriptEntry) GetTool() string {
+	if x != nil {
+		return x.Tool
+	}
+	return ""
+}
+
 type GetSessionScreenRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -427,7 +656,7 @@ type GetSessionScreenRequest struct {
 
 func (x *GetSessionScreenRequest) Reset() {
 	*x = GetSessionScreenRequest{}
-	mi := &file_aejar_v1_aejar_proto_msgTypes[8]
+	mi := &file_aejar_v1_aejar_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -439,7 +668,7 @@ func (x *GetSessionScreenRequest) String() string {
 func (*GetSessionScreenRequest) ProtoMessage() {}
 
 func (x *GetSessionScreenRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_aejar_v1_aejar_proto_msgTypes[8]
+	mi := &file_aejar_v1_aejar_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -452,7 +681,7 @@ func (x *GetSessionScreenRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSessionScreenRequest.ProtoReflect.Descriptor instead.
 func (*GetSessionScreenRequest) Descriptor() ([]byte, []int) {
-	return file_aejar_v1_aejar_proto_rawDescGZIP(), []int{8}
+	return file_aejar_v1_aejar_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *GetSessionScreenRequest) GetId() string {
@@ -480,7 +709,7 @@ type SessionScreen struct {
 
 func (x *SessionScreen) Reset() {
 	*x = SessionScreen{}
-	mi := &file_aejar_v1_aejar_proto_msgTypes[9]
+	mi := &file_aejar_v1_aejar_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -492,7 +721,7 @@ func (x *SessionScreen) String() string {
 func (*SessionScreen) ProtoMessage() {}
 
 func (x *SessionScreen) ProtoReflect() protoreflect.Message {
-	mi := &file_aejar_v1_aejar_proto_msgTypes[9]
+	mi := &file_aejar_v1_aejar_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -505,7 +734,7 @@ func (x *SessionScreen) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SessionScreen.ProtoReflect.Descriptor instead.
 func (*SessionScreen) Descriptor() ([]byte, []int) {
-	return file_aejar_v1_aejar_proto_rawDescGZIP(), []int{9}
+	return file_aejar_v1_aejar_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *SessionScreen) GetText() string {
@@ -534,7 +763,7 @@ type SendToTaskRequest struct {
 
 func (x *SendToTaskRequest) Reset() {
 	*x = SendToTaskRequest{}
-	mi := &file_aejar_v1_aejar_proto_msgTypes[10]
+	mi := &file_aejar_v1_aejar_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -546,7 +775,7 @@ func (x *SendToTaskRequest) String() string {
 func (*SendToTaskRequest) ProtoMessage() {}
 
 func (x *SendToTaskRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_aejar_v1_aejar_proto_msgTypes[10]
+	mi := &file_aejar_v1_aejar_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -559,7 +788,7 @@ func (x *SendToTaskRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SendToTaskRequest.ProtoReflect.Descriptor instead.
 func (*SendToTaskRequest) Descriptor() ([]byte, []int) {
-	return file_aejar_v1_aejar_proto_rawDescGZIP(), []int{10}
+	return file_aejar_v1_aejar_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *SendToTaskRequest) GetId() string {
@@ -594,7 +823,7 @@ type SendToTaskResponse struct {
 
 func (x *SendToTaskResponse) Reset() {
 	*x = SendToTaskResponse{}
-	mi := &file_aejar_v1_aejar_proto_msgTypes[11]
+	mi := &file_aejar_v1_aejar_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -606,7 +835,7 @@ func (x *SendToTaskResponse) String() string {
 func (*SendToTaskResponse) ProtoMessage() {}
 
 func (x *SendToTaskResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_aejar_v1_aejar_proto_msgTypes[11]
+	mi := &file_aejar_v1_aejar_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -619,7 +848,7 @@ func (x *SendToTaskResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SendToTaskResponse.ProtoReflect.Descriptor instead.
 func (*SendToTaskResponse) Descriptor() ([]byte, []int) {
-	return file_aejar_v1_aejar_proto_rawDescGZIP(), []int{11}
+	return file_aejar_v1_aejar_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *SendToTaskResponse) GetEventId() string {
@@ -647,7 +876,7 @@ type TaskSummary struct {
 
 func (x *TaskSummary) Reset() {
 	*x = TaskSummary{}
-	mi := &file_aejar_v1_aejar_proto_msgTypes[12]
+	mi := &file_aejar_v1_aejar_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -659,7 +888,7 @@ func (x *TaskSummary) String() string {
 func (*TaskSummary) ProtoMessage() {}
 
 func (x *TaskSummary) ProtoReflect() protoreflect.Message {
-	mi := &file_aejar_v1_aejar_proto_msgTypes[12]
+	mi := &file_aejar_v1_aejar_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -672,7 +901,7 @@ func (x *TaskSummary) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TaskSummary.ProtoReflect.Descriptor instead.
 func (*TaskSummary) Descriptor() ([]byte, []int) {
-	return file_aejar_v1_aejar_proto_rawDescGZIP(), []int{12}
+	return file_aejar_v1_aejar_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *TaskSummary) GetTask() *Task {
@@ -710,7 +939,7 @@ type RequestApprovalRequest struct {
 
 func (x *RequestApprovalRequest) Reset() {
 	*x = RequestApprovalRequest{}
-	mi := &file_aejar_v1_aejar_proto_msgTypes[13]
+	mi := &file_aejar_v1_aejar_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -722,7 +951,7 @@ func (x *RequestApprovalRequest) String() string {
 func (*RequestApprovalRequest) ProtoMessage() {}
 
 func (x *RequestApprovalRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_aejar_v1_aejar_proto_msgTypes[13]
+	mi := &file_aejar_v1_aejar_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -735,7 +964,7 @@ func (x *RequestApprovalRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RequestApprovalRequest.ProtoReflect.Descriptor instead.
 func (*RequestApprovalRequest) Descriptor() ([]byte, []int) {
-	return file_aejar_v1_aejar_proto_rawDescGZIP(), []int{13}
+	return file_aejar_v1_aejar_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *RequestApprovalRequest) GetTaskId() string {
@@ -786,7 +1015,7 @@ type DecideApprovalRequest struct {
 
 func (x *DecideApprovalRequest) Reset() {
 	*x = DecideApprovalRequest{}
-	mi := &file_aejar_v1_aejar_proto_msgTypes[14]
+	mi := &file_aejar_v1_aejar_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -798,7 +1027,7 @@ func (x *DecideApprovalRequest) String() string {
 func (*DecideApprovalRequest) ProtoMessage() {}
 
 func (x *DecideApprovalRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_aejar_v1_aejar_proto_msgTypes[14]
+	mi := &file_aejar_v1_aejar_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -811,7 +1040,7 @@ func (x *DecideApprovalRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DecideApprovalRequest.ProtoReflect.Descriptor instead.
 func (*DecideApprovalRequest) Descriptor() ([]byte, []int) {
-	return file_aejar_v1_aejar_proto_rawDescGZIP(), []int{14}
+	return file_aejar_v1_aejar_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *DecideApprovalRequest) GetId() string {
@@ -851,7 +1080,7 @@ type GetApprovalRequest struct {
 
 func (x *GetApprovalRequest) Reset() {
 	*x = GetApprovalRequest{}
-	mi := &file_aejar_v1_aejar_proto_msgTypes[15]
+	mi := &file_aejar_v1_aejar_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -863,7 +1092,7 @@ func (x *GetApprovalRequest) String() string {
 func (*GetApprovalRequest) ProtoMessage() {}
 
 func (x *GetApprovalRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_aejar_v1_aejar_proto_msgTypes[15]
+	mi := &file_aejar_v1_aejar_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -876,7 +1105,7 @@ func (x *GetApprovalRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetApprovalRequest.ProtoReflect.Descriptor instead.
 func (*GetApprovalRequest) Descriptor() ([]byte, []int) {
-	return file_aejar_v1_aejar_proto_rawDescGZIP(), []int{15}
+	return file_aejar_v1_aejar_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *GetApprovalRequest) GetId() string {
@@ -897,7 +1126,7 @@ type ListApprovalsRequest struct {
 
 func (x *ListApprovalsRequest) Reset() {
 	*x = ListApprovalsRequest{}
-	mi := &file_aejar_v1_aejar_proto_msgTypes[16]
+	mi := &file_aejar_v1_aejar_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -909,7 +1138,7 @@ func (x *ListApprovalsRequest) String() string {
 func (*ListApprovalsRequest) ProtoMessage() {}
 
 func (x *ListApprovalsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_aejar_v1_aejar_proto_msgTypes[16]
+	mi := &file_aejar_v1_aejar_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -922,7 +1151,7 @@ func (x *ListApprovalsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListApprovalsRequest.ProtoReflect.Descriptor instead.
 func (*ListApprovalsRequest) Descriptor() ([]byte, []int) {
-	return file_aejar_v1_aejar_proto_rawDescGZIP(), []int{16}
+	return file_aejar_v1_aejar_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *ListApprovalsRequest) GetStates() []ApprovalState {
@@ -948,7 +1177,7 @@ type ListApprovalsResponse struct {
 
 func (x *ListApprovalsResponse) Reset() {
 	*x = ListApprovalsResponse{}
-	mi := &file_aejar_v1_aejar_proto_msgTypes[17]
+	mi := &file_aejar_v1_aejar_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -960,7 +1189,7 @@ func (x *ListApprovalsResponse) String() string {
 func (*ListApprovalsResponse) ProtoMessage() {}
 
 func (x *ListApprovalsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_aejar_v1_aejar_proto_msgTypes[17]
+	mi := &file_aejar_v1_aejar_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -973,7 +1202,7 @@ func (x *ListApprovalsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListApprovalsResponse.ProtoReflect.Descriptor instead.
 func (*ListApprovalsResponse) Descriptor() ([]byte, []int) {
-	return file_aejar_v1_aejar_proto_rawDescGZIP(), []int{17}
+	return file_aejar_v1_aejar_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *ListApprovalsResponse) GetApprovals() []*Approval {
@@ -995,7 +1224,7 @@ type ListAuditEventsRequest struct {
 
 func (x *ListAuditEventsRequest) Reset() {
 	*x = ListAuditEventsRequest{}
-	mi := &file_aejar_v1_aejar_proto_msgTypes[18]
+	mi := &file_aejar_v1_aejar_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1007,7 +1236,7 @@ func (x *ListAuditEventsRequest) String() string {
 func (*ListAuditEventsRequest) ProtoMessage() {}
 
 func (x *ListAuditEventsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_aejar_v1_aejar_proto_msgTypes[18]
+	mi := &file_aejar_v1_aejar_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1020,7 +1249,7 @@ func (x *ListAuditEventsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListAuditEventsRequest.ProtoReflect.Descriptor instead.
 func (*ListAuditEventsRequest) Descriptor() ([]byte, []int) {
-	return file_aejar_v1_aejar_proto_rawDescGZIP(), []int{18}
+	return file_aejar_v1_aejar_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *ListAuditEventsRequest) GetAfterSeq() int64 {
@@ -1053,7 +1282,7 @@ type ListAuditEventsResponse struct {
 
 func (x *ListAuditEventsResponse) Reset() {
 	*x = ListAuditEventsResponse{}
-	mi := &file_aejar_v1_aejar_proto_msgTypes[19]
+	mi := &file_aejar_v1_aejar_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1065,7 +1294,7 @@ func (x *ListAuditEventsResponse) String() string {
 func (*ListAuditEventsResponse) ProtoMessage() {}
 
 func (x *ListAuditEventsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_aejar_v1_aejar_proto_msgTypes[19]
+	mi := &file_aejar_v1_aejar_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1078,7 +1307,7 @@ func (x *ListAuditEventsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListAuditEventsResponse.ProtoReflect.Descriptor instead.
 func (*ListAuditEventsResponse) Descriptor() ([]byte, []int) {
-	return file_aejar_v1_aejar_proto_rawDescGZIP(), []int{19}
+	return file_aejar_v1_aejar_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *ListAuditEventsResponse) GetEvents() []*AuditEvent {
@@ -1096,7 +1325,7 @@ type VerifyAuditRequest struct {
 
 func (x *VerifyAuditRequest) Reset() {
 	*x = VerifyAuditRequest{}
-	mi := &file_aejar_v1_aejar_proto_msgTypes[20]
+	mi := &file_aejar_v1_aejar_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1108,7 +1337,7 @@ func (x *VerifyAuditRequest) String() string {
 func (*VerifyAuditRequest) ProtoMessage() {}
 
 func (x *VerifyAuditRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_aejar_v1_aejar_proto_msgTypes[20]
+	mi := &file_aejar_v1_aejar_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1121,7 +1350,7 @@ func (x *VerifyAuditRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VerifyAuditRequest.ProtoReflect.Descriptor instead.
 func (*VerifyAuditRequest) Descriptor() ([]byte, []int) {
-	return file_aejar_v1_aejar_proto_rawDescGZIP(), []int{20}
+	return file_aejar_v1_aejar_proto_rawDescGZIP(), []int{24}
 }
 
 type VerifyAuditResponse struct {
@@ -1137,7 +1366,7 @@ type VerifyAuditResponse struct {
 
 func (x *VerifyAuditResponse) Reset() {
 	*x = VerifyAuditResponse{}
-	mi := &file_aejar_v1_aejar_proto_msgTypes[21]
+	mi := &file_aejar_v1_aejar_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1149,7 +1378,7 @@ func (x *VerifyAuditResponse) String() string {
 func (*VerifyAuditResponse) ProtoMessage() {}
 
 func (x *VerifyAuditResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_aejar_v1_aejar_proto_msgTypes[21]
+	mi := &file_aejar_v1_aejar_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1162,7 +1391,7 @@ func (x *VerifyAuditResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VerifyAuditResponse.ProtoReflect.Descriptor instead.
 func (*VerifyAuditResponse) Descriptor() ([]byte, []int) {
-	return file_aejar_v1_aejar_proto_rawDescGZIP(), []int{21}
+	return file_aejar_v1_aejar_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *VerifyAuditResponse) GetOk() bool {
@@ -1201,7 +1430,7 @@ type GetStatusRequest struct {
 
 func (x *GetStatusRequest) Reset() {
 	*x = GetStatusRequest{}
-	mi := &file_aejar_v1_aejar_proto_msgTypes[22]
+	mi := &file_aejar_v1_aejar_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1213,7 +1442,7 @@ func (x *GetStatusRequest) String() string {
 func (*GetStatusRequest) ProtoMessage() {}
 
 func (x *GetStatusRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_aejar_v1_aejar_proto_msgTypes[22]
+	mi := &file_aejar_v1_aejar_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1226,7 +1455,7 @@ func (x *GetStatusRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetStatusRequest.ProtoReflect.Descriptor instead.
 func (*GetStatusRequest) Descriptor() ([]byte, []int) {
-	return file_aejar_v1_aejar_proto_rawDescGZIP(), []int{22}
+	return file_aejar_v1_aejar_proto_rawDescGZIP(), []int{26}
 }
 
 type Status struct {
@@ -1243,7 +1472,7 @@ type Status struct {
 
 func (x *Status) Reset() {
 	*x = Status{}
-	mi := &file_aejar_v1_aejar_proto_msgTypes[23]
+	mi := &file_aejar_v1_aejar_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1255,7 +1484,7 @@ func (x *Status) String() string {
 func (*Status) ProtoMessage() {}
 
 func (x *Status) ProtoReflect() protoreflect.Message {
-	mi := &file_aejar_v1_aejar_proto_msgTypes[23]
+	mi := &file_aejar_v1_aejar_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1268,7 +1497,7 @@ func (x *Status) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Status.ProtoReflect.Descriptor instead.
 func (*Status) Descriptor() ([]byte, []int) {
-	return file_aejar_v1_aejar_proto_rawDescGZIP(), []int{23}
+	return file_aejar_v1_aejar_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *Status) GetCap() int32 {
@@ -1322,7 +1551,7 @@ type RequestCapChangeRequest struct {
 
 func (x *RequestCapChangeRequest) Reset() {
 	*x = RequestCapChangeRequest{}
-	mi := &file_aejar_v1_aejar_proto_msgTypes[24]
+	mi := &file_aejar_v1_aejar_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1334,7 +1563,7 @@ func (x *RequestCapChangeRequest) String() string {
 func (*RequestCapChangeRequest) ProtoMessage() {}
 
 func (x *RequestCapChangeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_aejar_v1_aejar_proto_msgTypes[24]
+	mi := &file_aejar_v1_aejar_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1347,7 +1576,7 @@ func (x *RequestCapChangeRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RequestCapChangeRequest.ProtoReflect.Descriptor instead.
 func (*RequestCapChangeRequest) Descriptor() ([]byte, []int) {
-	return file_aejar_v1_aejar_proto_rawDescGZIP(), []int{24}
+	return file_aejar_v1_aejar_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *RequestCapChangeRequest) GetCap() int32 {
@@ -1386,7 +1615,7 @@ type ClaudeHookRequest struct {
 
 func (x *ClaudeHookRequest) Reset() {
 	*x = ClaudeHookRequest{}
-	mi := &file_aejar_v1_aejar_proto_msgTypes[25]
+	mi := &file_aejar_v1_aejar_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1398,7 +1627,7 @@ func (x *ClaudeHookRequest) String() string {
 func (*ClaudeHookRequest) ProtoMessage() {}
 
 func (x *ClaudeHookRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_aejar_v1_aejar_proto_msgTypes[25]
+	mi := &file_aejar_v1_aejar_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1411,7 +1640,7 @@ func (x *ClaudeHookRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ClaudeHookRequest.ProtoReflect.Descriptor instead.
 func (*ClaudeHookRequest) Descriptor() ([]byte, []int) {
-	return file_aejar_v1_aejar_proto_rawDescGZIP(), []int{25}
+	return file_aejar_v1_aejar_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *ClaudeHookRequest) GetEvent() string {
@@ -1528,7 +1757,7 @@ type ClaudeHookResponse struct {
 
 func (x *ClaudeHookResponse) Reset() {
 	*x = ClaudeHookResponse{}
-	mi := &file_aejar_v1_aejar_proto_msgTypes[26]
+	mi := &file_aejar_v1_aejar_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1540,7 +1769,7 @@ func (x *ClaudeHookResponse) String() string {
 func (*ClaudeHookResponse) ProtoMessage() {}
 
 func (x *ClaudeHookResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_aejar_v1_aejar_proto_msgTypes[26]
+	mi := &file_aejar_v1_aejar_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1553,7 +1782,7 @@ func (x *ClaudeHookResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ClaudeHookResponse.ProtoReflect.Descriptor instead.
 func (*ClaudeHookResponse) Descriptor() ([]byte, []int) {
-	return file_aejar_v1_aejar_proto_rawDescGZIP(), []int{26}
+	return file_aejar_v1_aejar_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *ClaudeHookResponse) GetHookSpecificOutput() *HookSpecificOutput {
@@ -1576,7 +1805,7 @@ type HookSpecificOutput struct {
 
 func (x *HookSpecificOutput) Reset() {
 	*x = HookSpecificOutput{}
-	mi := &file_aejar_v1_aejar_proto_msgTypes[27]
+	mi := &file_aejar_v1_aejar_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1588,7 +1817,7 @@ func (x *HookSpecificOutput) String() string {
 func (*HookSpecificOutput) ProtoMessage() {}
 
 func (x *HookSpecificOutput) ProtoReflect() protoreflect.Message {
-	mi := &file_aejar_v1_aejar_proto_msgTypes[27]
+	mi := &file_aejar_v1_aejar_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1601,7 +1830,7 @@ func (x *HookSpecificOutput) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HookSpecificOutput.ProtoReflect.Descriptor instead.
 func (*HookSpecificOutput) Descriptor() ([]byte, []int) {
-	return file_aejar_v1_aejar_proto_rawDescGZIP(), []int{27}
+	return file_aejar_v1_aejar_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *HookSpecificOutput) GetHookEventName() string {
@@ -1658,7 +1887,22 @@ const file_aejar_v1_aejar_proto_rawDesc = "" +
 	"\x11ResumeTaskRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"&\n" +
 	"\x14SummarizeTaskRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"N\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"#\n" +
+	"\x11FinishTaskRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"<\n" +
+	"\x14GetTranscriptRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
+	"\x05limit\x18\x02 \x01(\x05R\x05limit\"_\n" +
+	"\n" +
+	"Transcript\x123\n" +
+	"\aentries\x18\x01 \x03(\v2\x19.aejar.v1.TranscriptEntryR\aentries\x12\x1c\n" +
+	"\ttruncated\x18\x02 \x01(\bR\ttruncated\"\x8d\x01\n" +
+	"\x0fTranscriptEntry\x12*\n" +
+	"\x02ts\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\x02ts\x12\x12\n" +
+	"\x04role\x18\x02 \x01(\tR\x04role\x12\x12\n" +
+	"\x04kind\x18\x03 \x01(\tR\x04kind\x12\x12\n" +
+	"\x04text\x18\x04 \x01(\tR\x04text\x12\x12\n" +
+	"\x04tool\x18\x05 \x01(\tR\x04tool\"N\n" +
 	"\x17GetSessionScreenRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12#\n" +
 	"\rhistory_lines\x18\x02 \x01(\x05R\fhistoryLines\"7\n" +
@@ -1741,7 +1985,7 @@ const file_aejar_v1_aejar_proto_rawDesc = "" +
 	"\x0fhook_event_name\x18\x01 \x01(\tR\rhookEventName\x12/\n" +
 	"\x13permission_decision\x18\x02 \x01(\tR\x12permissionDecision\x12<\n" +
 	"\x1apermission_decision_reason\x18\x03 \x01(\tR\x18permissionDecisionReason\x12-\n" +
-	"\x12additional_context\x18\x04 \x01(\tR\x11additionalContext2\xd7\x06\n" +
+	"\x12additional_context\x18\x04 \x01(\tR\x11additionalContext2\x9e\b\n" +
 	"\vTaskService\x12O\n" +
 	"\n" +
 	"CreateTask\x12\x1b.aejar.v1.CreateTaskRequest\x1a\x0e.aejar.v1.Task\"\x14\x82\xd3\xe4\x93\x02\x0e:\x01*\"\t/v1/tasks\x12K\n" +
@@ -1751,7 +1995,10 @@ const file_aejar_v1_aejar_proto_rawDesc = "" +
 	"\tPauseTask\x12\x1a.aejar.v1.PauseTaskRequest\x1a\x0e.aejar.v1.Task\"\x1f\x82\xd3\xe4\x93\x02\x19:\x01*\"\x14/v1/tasks/{id}:pause\x12[\n" +
 	"\n" +
 	"ResumeTask\x12\x1b.aejar.v1.ResumeTaskRequest\x1a\x0e.aejar.v1.Task\" \x82\xd3\xe4\x93\x02\x1a:\x01*\"\x15/v1/tasks/{id}:resume\x12f\n" +
-	"\rSummarizeTask\x12\x1e.aejar.v1.SummarizeTaskRequest\x1a\x15.aejar.v1.TaskSummary\"\x1e\x82\xd3\xe4\x93\x02\x18\x12\x16/v1/tasks/{id}/summary\x12m\n" +
+	"\rSummarizeTask\x12\x1e.aejar.v1.SummarizeTaskRequest\x1a\x15.aejar.v1.TaskSummary\"\x1e\x82\xd3\xe4\x93\x02\x18\x12\x16/v1/tasks/{id}/summary\x12[\n" +
+	"\n" +
+	"FinishTask\x12\x1b.aejar.v1.FinishTaskRequest\x1a\x0e.aejar.v1.Task\" \x82\xd3\xe4\x93\x02\x1a:\x01*\"\x15/v1/tasks/{id}:finish\x12h\n" +
+	"\rGetTranscript\x12\x1e.aejar.v1.GetTranscriptRequest\x1a\x14.aejar.v1.Transcript\"!\x82\xd3\xe4\x93\x02\x1b\x12\x19/v1/tasks/{id}/transcript\x12m\n" +
 	"\x10GetSessionScreen\x12!.aejar.v1.GetSessionScreenRequest\x1a\x17.aejar.v1.SessionScreen\"\x1d\x82\xd3\xe4\x93\x02\x17\x12\x15/v1/tasks/{id}/screen\x12f\n" +
 	"\n" +
 	"SendToTask\x12\x1b.aejar.v1.SendToTaskRequest\x1a\x1c.aejar.v1.SendToTaskResponse\"\x1d\x82\xd3\xe4\x93\x02\x17:\x01*\"\x12/v1/tasks/{id}:say2\xa7\x03\n" +
@@ -1784,7 +2031,7 @@ func file_aejar_v1_aejar_proto_rawDescGZIP() []byte {
 	return file_aejar_v1_aejar_proto_rawDescData
 }
 
-var file_aejar_v1_aejar_proto_msgTypes = make([]protoimpl.MessageInfo, 28)
+var file_aejar_v1_aejar_proto_msgTypes = make([]protoimpl.MessageInfo, 32)
 var file_aejar_v1_aejar_proto_goTypes = []any{
 	(*CreateTaskRequest)(nil),       // 0: aejar.v1.CreateTaskRequest
 	(*GetTaskRequest)(nil),          // 1: aejar.v1.GetTaskRequest
@@ -1794,92 +2041,102 @@ var file_aejar_v1_aejar_proto_goTypes = []any{
 	(*PauseTaskRequest)(nil),        // 5: aejar.v1.PauseTaskRequest
 	(*ResumeTaskRequest)(nil),       // 6: aejar.v1.ResumeTaskRequest
 	(*SummarizeTaskRequest)(nil),    // 7: aejar.v1.SummarizeTaskRequest
-	(*GetSessionScreenRequest)(nil), // 8: aejar.v1.GetSessionScreenRequest
-	(*SessionScreen)(nil),           // 9: aejar.v1.SessionScreen
-	(*SendToTaskRequest)(nil),       // 10: aejar.v1.SendToTaskRequest
-	(*SendToTaskResponse)(nil),      // 11: aejar.v1.SendToTaskResponse
-	(*TaskSummary)(nil),             // 12: aejar.v1.TaskSummary
-	(*RequestApprovalRequest)(nil),  // 13: aejar.v1.RequestApprovalRequest
-	(*DecideApprovalRequest)(nil),   // 14: aejar.v1.DecideApprovalRequest
-	(*GetApprovalRequest)(nil),      // 15: aejar.v1.GetApprovalRequest
-	(*ListApprovalsRequest)(nil),    // 16: aejar.v1.ListApprovalsRequest
-	(*ListApprovalsResponse)(nil),   // 17: aejar.v1.ListApprovalsResponse
-	(*ListAuditEventsRequest)(nil),  // 18: aejar.v1.ListAuditEventsRequest
-	(*ListAuditEventsResponse)(nil), // 19: aejar.v1.ListAuditEventsResponse
-	(*VerifyAuditRequest)(nil),      // 20: aejar.v1.VerifyAuditRequest
-	(*VerifyAuditResponse)(nil),     // 21: aejar.v1.VerifyAuditResponse
-	(*GetStatusRequest)(nil),        // 22: aejar.v1.GetStatusRequest
-	(*Status)(nil),                  // 23: aejar.v1.Status
-	(*RequestCapChangeRequest)(nil), // 24: aejar.v1.RequestCapChangeRequest
-	(*ClaudeHookRequest)(nil),       // 25: aejar.v1.ClaudeHookRequest
-	(*ClaudeHookResponse)(nil),      // 26: aejar.v1.ClaudeHookResponse
-	(*HookSpecificOutput)(nil),      // 27: aejar.v1.HookSpecificOutput
-	(TaskClass)(0),                  // 28: aejar.v1.TaskClass
-	(TaskState)(0),                  // 29: aejar.v1.TaskState
-	(*Task)(nil),                    // 30: aejar.v1.Task
-	(*AuditEvent)(nil),              // 31: aejar.v1.AuditEvent
-	(*Approval)(nil),                // 32: aejar.v1.Approval
-	(ApprovalClass)(0),              // 33: aejar.v1.ApprovalClass
-	(*structpb.Struct)(nil),         // 34: google.protobuf.Struct
-	(ApprovalState)(0),              // 35: aejar.v1.ApprovalState
-	(*timestamppb.Timestamp)(nil),   // 36: google.protobuf.Timestamp
+	(*FinishTaskRequest)(nil),       // 8: aejar.v1.FinishTaskRequest
+	(*GetTranscriptRequest)(nil),    // 9: aejar.v1.GetTranscriptRequest
+	(*Transcript)(nil),              // 10: aejar.v1.Transcript
+	(*TranscriptEntry)(nil),         // 11: aejar.v1.TranscriptEntry
+	(*GetSessionScreenRequest)(nil), // 12: aejar.v1.GetSessionScreenRequest
+	(*SessionScreen)(nil),           // 13: aejar.v1.SessionScreen
+	(*SendToTaskRequest)(nil),       // 14: aejar.v1.SendToTaskRequest
+	(*SendToTaskResponse)(nil),      // 15: aejar.v1.SendToTaskResponse
+	(*TaskSummary)(nil),             // 16: aejar.v1.TaskSummary
+	(*RequestApprovalRequest)(nil),  // 17: aejar.v1.RequestApprovalRequest
+	(*DecideApprovalRequest)(nil),   // 18: aejar.v1.DecideApprovalRequest
+	(*GetApprovalRequest)(nil),      // 19: aejar.v1.GetApprovalRequest
+	(*ListApprovalsRequest)(nil),    // 20: aejar.v1.ListApprovalsRequest
+	(*ListApprovalsResponse)(nil),   // 21: aejar.v1.ListApprovalsResponse
+	(*ListAuditEventsRequest)(nil),  // 22: aejar.v1.ListAuditEventsRequest
+	(*ListAuditEventsResponse)(nil), // 23: aejar.v1.ListAuditEventsResponse
+	(*VerifyAuditRequest)(nil),      // 24: aejar.v1.VerifyAuditRequest
+	(*VerifyAuditResponse)(nil),     // 25: aejar.v1.VerifyAuditResponse
+	(*GetStatusRequest)(nil),        // 26: aejar.v1.GetStatusRequest
+	(*Status)(nil),                  // 27: aejar.v1.Status
+	(*RequestCapChangeRequest)(nil), // 28: aejar.v1.RequestCapChangeRequest
+	(*ClaudeHookRequest)(nil),       // 29: aejar.v1.ClaudeHookRequest
+	(*ClaudeHookResponse)(nil),      // 30: aejar.v1.ClaudeHookResponse
+	(*HookSpecificOutput)(nil),      // 31: aejar.v1.HookSpecificOutput
+	(TaskClass)(0),                  // 32: aejar.v1.TaskClass
+	(TaskState)(0),                  // 33: aejar.v1.TaskState
+	(*Task)(nil),                    // 34: aejar.v1.Task
+	(*timestamppb.Timestamp)(nil),   // 35: google.protobuf.Timestamp
+	(*AuditEvent)(nil),              // 36: aejar.v1.AuditEvent
+	(*Approval)(nil),                // 37: aejar.v1.Approval
+	(ApprovalClass)(0),              // 38: aejar.v1.ApprovalClass
+	(*structpb.Struct)(nil),         // 39: google.protobuf.Struct
+	(ApprovalState)(0),              // 40: aejar.v1.ApprovalState
 }
 var file_aejar_v1_aejar_proto_depIdxs = []int32{
-	28, // 0: aejar.v1.CreateTaskRequest.class:type_name -> aejar.v1.TaskClass
-	29, // 1: aejar.v1.ListTasksRequest.states:type_name -> aejar.v1.TaskState
-	30, // 2: aejar.v1.ListTasksResponse.tasks:type_name -> aejar.v1.Task
-	30, // 3: aejar.v1.TaskSummary.task:type_name -> aejar.v1.Task
-	31, // 4: aejar.v1.TaskSummary.recent_events:type_name -> aejar.v1.AuditEvent
-	32, // 5: aejar.v1.TaskSummary.pending_approvals:type_name -> aejar.v1.Approval
-	33, // 6: aejar.v1.RequestApprovalRequest.class:type_name -> aejar.v1.ApprovalClass
-	34, // 7: aejar.v1.RequestApprovalRequest.payload:type_name -> google.protobuf.Struct
-	35, // 8: aejar.v1.ListApprovalsRequest.states:type_name -> aejar.v1.ApprovalState
-	32, // 9: aejar.v1.ListApprovalsResponse.approvals:type_name -> aejar.v1.Approval
-	31, // 10: aejar.v1.ListAuditEventsResponse.events:type_name -> aejar.v1.AuditEvent
-	36, // 11: aejar.v1.Status.limit_blocked_until:type_name -> google.protobuf.Timestamp
-	34, // 12: aejar.v1.ClaudeHookRequest.tool_input:type_name -> google.protobuf.Struct
-	27, // 13: aejar.v1.ClaudeHookResponse.hook_specific_output:type_name -> aejar.v1.HookSpecificOutput
-	0,  // 14: aejar.v1.TaskService.CreateTask:input_type -> aejar.v1.CreateTaskRequest
-	1,  // 15: aejar.v1.TaskService.GetTask:input_type -> aejar.v1.GetTaskRequest
-	2,  // 16: aejar.v1.TaskService.ListTasks:input_type -> aejar.v1.ListTasksRequest
-	4,  // 17: aejar.v1.TaskService.SetPriority:input_type -> aejar.v1.SetPriorityRequest
-	5,  // 18: aejar.v1.TaskService.PauseTask:input_type -> aejar.v1.PauseTaskRequest
-	6,  // 19: aejar.v1.TaskService.ResumeTask:input_type -> aejar.v1.ResumeTaskRequest
-	7,  // 20: aejar.v1.TaskService.SummarizeTask:input_type -> aejar.v1.SummarizeTaskRequest
-	8,  // 21: aejar.v1.TaskService.GetSessionScreen:input_type -> aejar.v1.GetSessionScreenRequest
-	10, // 22: aejar.v1.TaskService.SendToTask:input_type -> aejar.v1.SendToTaskRequest
-	13, // 23: aejar.v1.ApprovalService.RequestApproval:input_type -> aejar.v1.RequestApprovalRequest
-	14, // 24: aejar.v1.ApprovalService.DecideApproval:input_type -> aejar.v1.DecideApprovalRequest
-	15, // 25: aejar.v1.ApprovalService.GetApproval:input_type -> aejar.v1.GetApprovalRequest
-	16, // 26: aejar.v1.ApprovalService.ListApprovals:input_type -> aejar.v1.ListApprovalsRequest
-	18, // 27: aejar.v1.AuditService.ListAuditEvents:input_type -> aejar.v1.ListAuditEventsRequest
-	20, // 28: aejar.v1.AuditService.VerifyAudit:input_type -> aejar.v1.VerifyAuditRequest
-	22, // 29: aejar.v1.OpsService.GetStatus:input_type -> aejar.v1.GetStatusRequest
-	24, // 30: aejar.v1.OpsService.RequestCapChange:input_type -> aejar.v1.RequestCapChangeRequest
-	25, // 31: aejar.v1.HookService.ClaudeHook:input_type -> aejar.v1.ClaudeHookRequest
-	30, // 32: aejar.v1.TaskService.CreateTask:output_type -> aejar.v1.Task
-	30, // 33: aejar.v1.TaskService.GetTask:output_type -> aejar.v1.Task
-	3,  // 34: aejar.v1.TaskService.ListTasks:output_type -> aejar.v1.ListTasksResponse
-	30, // 35: aejar.v1.TaskService.SetPriority:output_type -> aejar.v1.Task
-	30, // 36: aejar.v1.TaskService.PauseTask:output_type -> aejar.v1.Task
-	30, // 37: aejar.v1.TaskService.ResumeTask:output_type -> aejar.v1.Task
-	12, // 38: aejar.v1.TaskService.SummarizeTask:output_type -> aejar.v1.TaskSummary
-	9,  // 39: aejar.v1.TaskService.GetSessionScreen:output_type -> aejar.v1.SessionScreen
-	11, // 40: aejar.v1.TaskService.SendToTask:output_type -> aejar.v1.SendToTaskResponse
-	32, // 41: aejar.v1.ApprovalService.RequestApproval:output_type -> aejar.v1.Approval
-	32, // 42: aejar.v1.ApprovalService.DecideApproval:output_type -> aejar.v1.Approval
-	32, // 43: aejar.v1.ApprovalService.GetApproval:output_type -> aejar.v1.Approval
-	17, // 44: aejar.v1.ApprovalService.ListApprovals:output_type -> aejar.v1.ListApprovalsResponse
-	19, // 45: aejar.v1.AuditService.ListAuditEvents:output_type -> aejar.v1.ListAuditEventsResponse
-	21, // 46: aejar.v1.AuditService.VerifyAudit:output_type -> aejar.v1.VerifyAuditResponse
-	23, // 47: aejar.v1.OpsService.GetStatus:output_type -> aejar.v1.Status
-	32, // 48: aejar.v1.OpsService.RequestCapChange:output_type -> aejar.v1.Approval
-	26, // 49: aejar.v1.HookService.ClaudeHook:output_type -> aejar.v1.ClaudeHookResponse
-	32, // [32:50] is the sub-list for method output_type
-	14, // [14:32] is the sub-list for method input_type
-	14, // [14:14] is the sub-list for extension type_name
-	14, // [14:14] is the sub-list for extension extendee
-	0,  // [0:14] is the sub-list for field type_name
+	32, // 0: aejar.v1.CreateTaskRequest.class:type_name -> aejar.v1.TaskClass
+	33, // 1: aejar.v1.ListTasksRequest.states:type_name -> aejar.v1.TaskState
+	34, // 2: aejar.v1.ListTasksResponse.tasks:type_name -> aejar.v1.Task
+	11, // 3: aejar.v1.Transcript.entries:type_name -> aejar.v1.TranscriptEntry
+	35, // 4: aejar.v1.TranscriptEntry.ts:type_name -> google.protobuf.Timestamp
+	34, // 5: aejar.v1.TaskSummary.task:type_name -> aejar.v1.Task
+	36, // 6: aejar.v1.TaskSummary.recent_events:type_name -> aejar.v1.AuditEvent
+	37, // 7: aejar.v1.TaskSummary.pending_approvals:type_name -> aejar.v1.Approval
+	38, // 8: aejar.v1.RequestApprovalRequest.class:type_name -> aejar.v1.ApprovalClass
+	39, // 9: aejar.v1.RequestApprovalRequest.payload:type_name -> google.protobuf.Struct
+	40, // 10: aejar.v1.ListApprovalsRequest.states:type_name -> aejar.v1.ApprovalState
+	37, // 11: aejar.v1.ListApprovalsResponse.approvals:type_name -> aejar.v1.Approval
+	36, // 12: aejar.v1.ListAuditEventsResponse.events:type_name -> aejar.v1.AuditEvent
+	35, // 13: aejar.v1.Status.limit_blocked_until:type_name -> google.protobuf.Timestamp
+	39, // 14: aejar.v1.ClaudeHookRequest.tool_input:type_name -> google.protobuf.Struct
+	31, // 15: aejar.v1.ClaudeHookResponse.hook_specific_output:type_name -> aejar.v1.HookSpecificOutput
+	0,  // 16: aejar.v1.TaskService.CreateTask:input_type -> aejar.v1.CreateTaskRequest
+	1,  // 17: aejar.v1.TaskService.GetTask:input_type -> aejar.v1.GetTaskRequest
+	2,  // 18: aejar.v1.TaskService.ListTasks:input_type -> aejar.v1.ListTasksRequest
+	4,  // 19: aejar.v1.TaskService.SetPriority:input_type -> aejar.v1.SetPriorityRequest
+	5,  // 20: aejar.v1.TaskService.PauseTask:input_type -> aejar.v1.PauseTaskRequest
+	6,  // 21: aejar.v1.TaskService.ResumeTask:input_type -> aejar.v1.ResumeTaskRequest
+	7,  // 22: aejar.v1.TaskService.SummarizeTask:input_type -> aejar.v1.SummarizeTaskRequest
+	8,  // 23: aejar.v1.TaskService.FinishTask:input_type -> aejar.v1.FinishTaskRequest
+	9,  // 24: aejar.v1.TaskService.GetTranscript:input_type -> aejar.v1.GetTranscriptRequest
+	12, // 25: aejar.v1.TaskService.GetSessionScreen:input_type -> aejar.v1.GetSessionScreenRequest
+	14, // 26: aejar.v1.TaskService.SendToTask:input_type -> aejar.v1.SendToTaskRequest
+	17, // 27: aejar.v1.ApprovalService.RequestApproval:input_type -> aejar.v1.RequestApprovalRequest
+	18, // 28: aejar.v1.ApprovalService.DecideApproval:input_type -> aejar.v1.DecideApprovalRequest
+	19, // 29: aejar.v1.ApprovalService.GetApproval:input_type -> aejar.v1.GetApprovalRequest
+	20, // 30: aejar.v1.ApprovalService.ListApprovals:input_type -> aejar.v1.ListApprovalsRequest
+	22, // 31: aejar.v1.AuditService.ListAuditEvents:input_type -> aejar.v1.ListAuditEventsRequest
+	24, // 32: aejar.v1.AuditService.VerifyAudit:input_type -> aejar.v1.VerifyAuditRequest
+	26, // 33: aejar.v1.OpsService.GetStatus:input_type -> aejar.v1.GetStatusRequest
+	28, // 34: aejar.v1.OpsService.RequestCapChange:input_type -> aejar.v1.RequestCapChangeRequest
+	29, // 35: aejar.v1.HookService.ClaudeHook:input_type -> aejar.v1.ClaudeHookRequest
+	34, // 36: aejar.v1.TaskService.CreateTask:output_type -> aejar.v1.Task
+	34, // 37: aejar.v1.TaskService.GetTask:output_type -> aejar.v1.Task
+	3,  // 38: aejar.v1.TaskService.ListTasks:output_type -> aejar.v1.ListTasksResponse
+	34, // 39: aejar.v1.TaskService.SetPriority:output_type -> aejar.v1.Task
+	34, // 40: aejar.v1.TaskService.PauseTask:output_type -> aejar.v1.Task
+	34, // 41: aejar.v1.TaskService.ResumeTask:output_type -> aejar.v1.Task
+	16, // 42: aejar.v1.TaskService.SummarizeTask:output_type -> aejar.v1.TaskSummary
+	34, // 43: aejar.v1.TaskService.FinishTask:output_type -> aejar.v1.Task
+	10, // 44: aejar.v1.TaskService.GetTranscript:output_type -> aejar.v1.Transcript
+	13, // 45: aejar.v1.TaskService.GetSessionScreen:output_type -> aejar.v1.SessionScreen
+	15, // 46: aejar.v1.TaskService.SendToTask:output_type -> aejar.v1.SendToTaskResponse
+	37, // 47: aejar.v1.ApprovalService.RequestApproval:output_type -> aejar.v1.Approval
+	37, // 48: aejar.v1.ApprovalService.DecideApproval:output_type -> aejar.v1.Approval
+	37, // 49: aejar.v1.ApprovalService.GetApproval:output_type -> aejar.v1.Approval
+	21, // 50: aejar.v1.ApprovalService.ListApprovals:output_type -> aejar.v1.ListApprovalsResponse
+	23, // 51: aejar.v1.AuditService.ListAuditEvents:output_type -> aejar.v1.ListAuditEventsResponse
+	25, // 52: aejar.v1.AuditService.VerifyAudit:output_type -> aejar.v1.VerifyAuditResponse
+	27, // 53: aejar.v1.OpsService.GetStatus:output_type -> aejar.v1.Status
+	37, // 54: aejar.v1.OpsService.RequestCapChange:output_type -> aejar.v1.Approval
+	30, // 55: aejar.v1.HookService.ClaudeHook:output_type -> aejar.v1.ClaudeHookResponse
+	36, // [36:56] is the sub-list for method output_type
+	16, // [16:36] is the sub-list for method input_type
+	16, // [16:16] is the sub-list for extension type_name
+	16, // [16:16] is the sub-list for extension extendee
+	0,  // [0:16] is the sub-list for field type_name
 }
 
 func init() { file_aejar_v1_aejar_proto_init() }
@@ -1894,7 +2151,7 @@ func file_aejar_v1_aejar_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_aejar_v1_aejar_proto_rawDesc), len(file_aejar_v1_aejar_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   28,
+			NumMessages:   32,
 			NumExtensions: 0,
 			NumServices:   5,
 		},

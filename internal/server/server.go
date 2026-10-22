@@ -48,6 +48,12 @@ type Server struct {
 	Runner    runner.Runner
 	Now       func() time.Time
 	Resources func() scheduler.Resources
+	// IdleTimeout finishes a task whose session has sat idle this long with
+	// nothing pending. Claude Code waits for input after its last turn, so
+	// without it a finished task would hold its slot forever.
+	IdleTimeout time.Duration
+	// SessionsDir is where session homes live (transcripts), as aejard sees it.
+	SessionsDir string
 
 	// tickMu serialises scheduler ticks.
 	tickMu sync.Mutex
@@ -57,13 +63,14 @@ type Server struct {
 // New returns a Server with production defaults for unset fields.
 func New(db *sql.DB, a *auth.Authenticator, r runner.Runner) *Server {
 	s := &Server{
-		DB:     db,
-		Auth:   a,
-		Policy: policy.DefaultConfig(),
-		Sched:  scheduler.DefaultConfig(),
-		Runner: r,
-		Now:    time.Now,
-		kick:   make(chan struct{}, 1),
+		DB:          db,
+		Auth:        a,
+		Policy:      policy.DefaultConfig(),
+		Sched:       scheduler.DefaultConfig(),
+		Runner:      r,
+		Now:         time.Now,
+		IdleTimeout: 10 * time.Minute,
+		kick:        make(chan struct{}, 1),
 	}
 	s.Resources = func() scheduler.Resources {
 		return scheduler.Resources{
@@ -182,7 +189,37 @@ func (s *Server) Tick(ctx context.Context) error {
 		}
 	}
 	s.typeFallback(ctx)
+	return s.finishIdle(ctx)
+}
+
+// finishIdle marks tasks done whose sessions have been idle for IdleTimeout
+// with no pending approval or undelivered message.
+func (s *Server) finishIdle(ctx context.Context) error {
+	rows, err := s.DB.QueryContext(ctx, `SELECT id FROM tasks t WHERE state = ? AND idle_since > 0 AND idle_since < ?
+		AND NOT EXISTS (SELECT 1 FROM approvals a WHERE a.task_id = t.id AND a.state = ?)
+		AND NOT EXISTS (SELECT 1 FROM session_events e WHERE e.task_id = t.id AND e.delivered_at IS NULL)`,
+		aejarv1.TaskState_TASK_STATE_RUNNING, s.Now().Add(-s.IdleTimeout).UnixNano(), aejarv1.ApprovalState_APPROVAL_STATE_PENDING)
+	if err != nil {
+		return err
+	}
+	var ids []string
+	for rows.Next() {
+		var id string
+		rows.Scan(&id)
+		ids = append(ids, id)
+	}
+	rows.Close()
+	for _, id := range ids {
+		if err := s.stopTask(ctx, id, aejarv1.TaskState_TASK_STATE_DONE, "", "finished: idle for "+s.IdleTimeout.String()); err != nil {
+			return err
+		}
+	}
 	return nil
+}
+
+// markActive records that the session is working (resets the idle clock).
+func (s *Server) markActive(ctx context.Context, taskID string) {
+	s.DB.ExecContext(ctx, `UPDATE tasks SET idle_since = 0 WHERE id = ? AND idle_since != 0`, taskID)
 }
 
 // startTask issues a session token, marks the task running and starts it.
@@ -205,7 +242,7 @@ func (s *Server) startTask(ctx context.Context, id string) error {
 		canon.HashBytes([]byte(token)), id, spec.Profile, now.UnixNano()); err != nil {
 		return err
 	}
-	if _, err := tx.ExecContext(ctx, `UPDATE tasks SET state = ?, wake_boost = 0, wait_reason = '', updated_at = ? WHERE id = ?`,
+	if _, err := tx.ExecContext(ctx, `UPDATE tasks SET state = ?, wake_boost = 0, wait_reason = '', idle_since = 0, complete_requested = 0, updated_at = ? WHERE id = ?`,
 		aejarv1.TaskState_TASK_STATE_RUNNING, now.UnixNano(), id); err != nil {
 		return err
 	}
@@ -238,13 +275,17 @@ func (s *Server) startTask(ctx context.Context, id string) error {
 // stopTask stops a running task, revokes its session tokens and moves it to
 // state. A stopped session keeps its conversation for --resume.
 func (s *Server) stopTask(ctx context.Context, id string, state aejarv1.TaskState, waitReason, why string) error {
+	// Keep the last screen for the history view before the session goes.
+	if screen, err := s.Runner.Screen(ctx, id, 300); err == nil && strings.TrimSpace(screen) != "" {
+		s.DB.ExecContext(ctx, `UPDATE tasks SET last_screen = ? WHERE id = ?`, screen, id)
+	}
 	now := s.Now()
 	tx, err := s.DB.BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback()
-	if _, err := tx.ExecContext(ctx, `UPDATE tasks SET state = ?, wait_reason = ?, updated_at = ? WHERE id = ?`,
+	if _, err := tx.ExecContext(ctx, `UPDATE tasks SET state = ?, wait_reason = ?, idle_since = 0, updated_at = ? WHERE id = ?`,
 		state, waitReason, now.UnixNano(), id); err != nil {
 		return err
 	}

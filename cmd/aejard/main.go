@@ -95,6 +95,7 @@ func run(c config) error {
 	}
 
 	srv := server.New(db, a, r)
+	srv.SessionsDir = c.sessionsDir
 	handler, cleanup, err := srv.Handler(ctx)
 	if err != nil {
 		return err

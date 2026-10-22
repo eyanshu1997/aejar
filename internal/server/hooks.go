@@ -26,8 +26,16 @@ func (s *Server) ClaudeHook(ctx context.Context, req *aejarv1.ClaudeHookRequest)
 	}
 	switch req.Event {
 	case "pre-tool":
+		s.markActive(ctx, p.TaskID)
 		return s.preTool(ctx, p, req)
+	case "task-complete":
+		// The session says its work is done; it ends after this turn.
+		if _, err := s.DB.ExecContext(ctx, `UPDATE tasks SET complete_requested = 1 WHERE id = ?`, p.TaskID); err != nil {
+			return nil, err
+		}
+		s.audit(ctx, p.Name, "task.complete_requested", p.TaskID, map[string]any{"summary": truncate(req.Message, 2000)})
 	case "post-tool":
+		s.markActive(ctx, p.TaskID)
 		payload := map[string]any{"tool": req.ToolName, "input_hash": inputHash(req)}
 		if req.ToolInput != nil {
 			if sum := inputSummary(req.ToolName, req.ToolInput.AsMap()); sum != "" {
@@ -191,7 +199,13 @@ func (s *Server) onStop(ctx context.Context, p auth.Principal, reply string) err
 	reply = truncate(reply, 3000)
 	if pending == 0 {
 		s.audit(ctx, p.Name, "session.idle", p.TaskID, map[string]any{"reply": reply})
-		return nil
+		var complete int
+		s.DB.QueryRowContext(ctx, `SELECT complete_requested FROM tasks WHERE id = ?`, p.TaskID).Scan(&complete)
+		if complete == 1 {
+			return s.stopTask(ctx, p.TaskID, aejarv1.TaskState_TASK_STATE_DONE, "", "completed by the session")
+		}
+		_, err := s.DB.ExecContext(ctx, `UPDATE tasks SET idle_since = ? WHERE id = ?`, s.Now().UnixNano(), p.TaskID)
+		return err
 	}
 	s.audit(ctx, p.Name, "session.reply", p.TaskID, map[string]any{"reply": reply})
 	if err := s.stopTask(ctx, p.TaskID, aejarv1.TaskState_TASK_STATE_WAITING, "approval", "waiting for owner approval"); err != nil {

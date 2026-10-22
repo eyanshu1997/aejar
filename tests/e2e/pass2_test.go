@@ -11,6 +11,8 @@ import (
 	"math/big"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -272,5 +274,86 @@ func TestAuditCarriesReadableDetail(t *testing.T) {
 	}
 	if reply != "Found 3 files." {
 		t.Errorf("reply: %v", reply)
+	}
+}
+
+// Regression: a session that finished its work stayed "running" forever and
+// kept its scheduler slot (Claude Code waits for input after its last turn).
+func TestIdleSessionFinishes(t *testing.T) {
+	e := setup(t)
+	id, sess := e.startTask("t", "plan")
+	e.rec.SetScreen("● Done. Summary: all good.")
+	e.must("POST", "/hooks/claude/stop", sess, map[string]any{"last_assistant_message": "Done."})
+	e.clock.Advance(5 * time.Minute)
+	e.tick()
+	if s := e.state(id); s != "TASK_STATE_RUNNING" {
+		t.Fatalf("finished too early: %s", s)
+	}
+	// Work in between resets the idle clock.
+	e.preTool(sess, "Read", map[string]any{"file_path": "/work/a"})
+	e.clock.Advance(6 * time.Minute)
+	e.tick()
+	if s := e.state(id); s != "TASK_STATE_RUNNING" {
+		t.Fatalf("activity did not reset the idle clock: %s", s)
+	}
+	e.must("POST", "/hooks/claude/stop", sess, map[string]any{"last_assistant_message": "Done again."})
+	e.clock.Advance(11 * time.Minute)
+	e.tick()
+	if s := e.state(id); s != "TASK_STATE_DONE" {
+		t.Fatalf("idle session not finished: %s", s)
+	}
+	if len(e.calls("stop", id)) != 1 {
+		t.Fatal("session not stopped")
+	}
+	// History keeps the last screen.
+	if sc := e.must("GET", "/v1/tasks/"+id+"/screen", e.owner, nil); sc["live"] == true || !strings.Contains(sc["text"].(string), "Summary: all good") {
+		t.Fatalf("last screen: %v", sc)
+	}
+	// A message reopens the task with the same conversation.
+	e.must("POST", "/v1/tasks/"+id+":say", e.owner, map[string]any{"text": "one more thing"})
+	if s := e.state(id); s != "TASK_STATE_QUEUED" {
+		t.Fatalf("message did not reopen the task: %s", s)
+	}
+}
+
+func TestSessionCanCompleteItsTask(t *testing.T) {
+	e := setup(t)
+	id, sess := e.startTask("t", "plan")
+	e.must("POST", "/hooks/claude/task-complete", sess, map[string]any{"message": "Plan written to plan.html"})
+	if s := e.state(id); s != "TASK_STATE_RUNNING" {
+		t.Fatalf("stopped mid-turn: %s", s)
+	}
+	e.must("POST", "/hooks/claude/stop", sess, map[string]any{"last_assistant_message": "All done."})
+	if s := e.state(id); s != "TASK_STATE_DONE" {
+		t.Fatalf("not done after its turn ended: %s", s)
+	}
+}
+
+func TestOwnerFinishesTask(t *testing.T) {
+	e := setup(t)
+	id, _ := e.startTask("t", "plan")
+	e.must("POST", "/v1/tasks/"+id+":finish", e.owner, map[string]any{})
+	if s := e.state(id); s != "TASK_STATE_DONE" || len(e.calls("stop", id)) != 1 {
+		t.Fatalf("finish: %s", s)
+	}
+}
+
+func TestTranscriptHistory(t *testing.T) {
+	e := setup(t)
+	e.srv.SessionsDir = t.TempDir()
+	id, _ := e.startTask("t", "plan")
+	proj := filepath.Join(e.srv.SessionsDir, id, "home", ".claude", "projects", "-work")
+	os.MkdirAll(proj, 0o755)
+	os.WriteFile(filepath.Join(proj, "s.jsonl"), []byte(
+		`{"type":"user","uuid":"u1","timestamp":"2026-10-22T10:00:00Z","message":{"role":"user","content":"hello"}}`+"\n"+
+			`{"type":"assistant","uuid":"a1","timestamp":"2026-10-22T10:00:01Z","message":{"role":"assistant","content":[{"type":"text","text":"hi there"}]}}`+"\n"), 0o644)
+	got := e.must("GET", "/v1/tasks/"+id+"/transcript", e.owner, nil)["entries"].([]any)
+	if len(got) != 2 || got[1].(map[string]any)["text"] != "hi there" {
+		t.Fatalf("transcript: %v", got)
+	}
+	// History stays readable after the task is finished.
+	e.must("POST", "/v1/tasks/"+id+":finish", e.owner, map[string]any{})
+	if got := e.must("GET", "/v1/tasks/"+id+"/transcript", e.owner, nil)["entries"].([]any); len(got) != 2 {
+		t.Fatalf("after finish: %v", got)
 	}
 }

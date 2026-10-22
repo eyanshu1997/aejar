@@ -36,6 +36,10 @@
   .ev summary::-webkit-details-marker { display:none; }
   .ev .act { font-weight:600; } .ev .what { color:var(--fg); }
   .ev pre { background:var(--bg); padding:8px; border-radius:6px; margin-top:6px; }
+  .conv { max-height:520px; overflow:auto; border:1px solid var(--line); border-radius:6px; padding:8px; }
+  .msg { margin:6px 0; } .msg .who { font-size:12px; color:var(--muted); }
+  .msg.user .body { background:var(--sel); } .msg .body { white-space:pre-wrap; word-break:break-word; padding:6px 10px; border-radius:6px; }
+  .msg.tool .body { font:12.5px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace; background:var(--bg); color:var(--muted); }
   .reply { white-space:pre-wrap; background:var(--bg); border-left:3px solid var(--accent); padding:6px 10px; margin-top:4px; border-radius:4px; }
 </style>
 </head>
@@ -92,6 +96,8 @@ function describe(ev) {
     'task.stopped': () => `session stopped → ${short(p.to)}: ${p.why || ''}`,
     'task.start_failed': () => `could not start session: ${p.error}`,
     'task.woken': () => 'back in the queue',
+    'task.reopened': () => 'reopened by a message', 'task.finished': () => 'marked done',
+    'task.complete_requested': () => `session says done: ${p.summary || ''}`,
     'task.paused': () => 'paused', 'task.resumed': () => 'resumed', 'task.priority': () => `priority bump ${p.user_bump}`,
     'session.started': () => `Claude session ${p.source || ''} ${p.claude_session_id ? '(' + p.claude_session_id.slice(0, 8) + ')' : ''}`,
     'session.channel_ready': () => 'message channel connected', 'session.channel_unavailable': () => `message channel unavailable: ${p.message || ''}`,
@@ -161,31 +167,45 @@ async function renderDetail() {
   const t = tasksCache.find((x) => x.id === selected);
   if (!t) { box.replaceChildren(el('h2', {}, 'Task'), el('div', { class: 'muted' }, 'Select a task to see its live session and activity.')); return; }
   const st = short(t.state);
-  const [screen, sum] = await Promise.all([
+  const [screen, sum, tr] = await Promise.all([
     api('GET', `/v1/tasks/${t.id}/screen?historyLines=300`).catch((e) => ({ text: String(e.message || e) })),
     api('GET', `/v1/tasks/${t.id}/summary`).catch(() => ({})),
+    api('GET', `/v1/tasks/${t.id}/transcript?limit=300`).catch(() => ({})),
   ]);
+  const entries = tr.entries || [];
+  const conv = el('div', { class: 'conv' }, entries.length ? '' : el('div', { class: 'muted' }, 'No conversation yet.'),
+    tr.truncated ? el('div', { class: 'muted' }, '(older messages not shown)') : '',
+    entries.map((m) => {
+      const tool = m.kind !== 'text';
+      const who = m.kind === 'tool_use' ? `${m.role} → ${m.tool}` : m.kind === 'tool_result' ? 'tool result' : (m.role === 'user' ? 'prompt / message' : 'Claude');
+      return el('div', { class: 'msg ' + (tool ? 'tool' : m.role) }, el('div', { class: 'who' }, `${who} · ${when(m.ts)}`), el('div', { class: 'body' }, m.text));
+    }));
   const term = el('div', { class: 'term' }, el('pre', {}, (screen.text || '').replace(/\s+$/, '')));
   const events = auditCache.filter((ev) => ev.subject === t.id || (ev.payload && ev.payload.task === t.id));
   const actBtn = st === 'paused' ? el('button', { onclick: () => act(t.id, 'resume') }, 'Resume')
     : ['running', 'queued', 'waiting'].includes(st) ? el('button', { onclick: () => act(t.id, 'pause') }, 'Pause') : '';
+  const finBtn = ['running', 'queued', 'waiting', 'paused', 'preempted', 'limit_blocked'].includes(st)
+    ? el('button', { onclick: () => { if (confirm('Mark this task done and end its session? Messaging it later reopens it.')) act(t.id, 'finish'); } }, 'Finish') : '';
+  const convWasAtEnd = !box.querySelector('.conv') || (box.querySelector('.conv').scrollTop + box.querySelector('.conv').clientHeight >= box.querySelector('.conv').scrollHeight - 30);
   const say = el('form', { onsubmit: async (e) => { e.preventDefault(); const text = e.target.text.value;
       try { const r = await api('POST', `/v1/tasks/${t.id}:say`, { text }); e.target.reset(); report(r.delivered ? null : 'Queued: delivered when the session runs.'); refresh(); } catch (err) { report(err); } } },
     el('div', { class: 'row' }, el('input', { name: 'text', placeholder: 'Message the session…', required: true }), el('button', { type: 'submit' }, 'Send')));
   const scrolledToEnd = !box.querySelector('.term') || (box.querySelector('.term').scrollTop + box.querySelector('.term').clientHeight >= box.querySelector('.term').scrollHeight - 30);
   box.replaceChildren(
     el('h2', {}, 'Task'),
-    el('div', { class: 'row' }, el('h3', {}, t.title), el('span', { class: 'badge ' + st }, st + (t.waitReason ? ` · ${t.waitReason}` : '')), actBtn),
+    el('div', { class: 'row' }, el('h3', {}, t.title), el('span', { class: 'badge ' + st }, st + (t.waitReason ? ` · ${t.waitReason}` : '')), actBtn, finBtn),
     el('div', { class: 'muted' }, `${t.id} · ${short(t.class)} · ${t.profile}${t.claudeSessionId ? ' · claude ' + t.claudeSessionId.slice(0, 8) : ''}`),
     t.prompt ? el('div', { class: 'reply', style: 'border-left-color:var(--muted)' }, t.prompt) : '',
-    el('h2', { style: 'margin-top:14px' }, screen.live ? 'Live session (refreshes every 3s)' : 'Session'),
+    el('h2', { style: 'margin-top:14px' }, screen.live ? 'Live session screen (refreshes every 3s)' : 'Last screen (saved when the session stopped)'),
     term,
+    el('h2', { style: 'margin-top:14px' }, `Conversation (${entries.length})`), conv,
     (sum.pendingApprovals || []).length ? el('h2', { style: 'margin-top:14px' }, 'This task is waiting for you') : '',
     ...(sum.pendingApprovals || []).map(approvalCard),
-    el('h2', { style: 'margin-top:14px' }, 'Message the session'), say,
+    el('h2', { style: 'margin-top:14px' }, st === 'done' ? 'Message the session (reopens the task)' : 'Message the session'), say,
     el('h2', { style: 'margin-top:14px' }, `Activity (${events.length})`),
     el('div', {}, events.slice().reverse().map((ev) => eventRow(ev, false))));
   const nt = box.querySelector('.term'); if (scrolledToEnd) nt.scrollTop = nt.scrollHeight;
+  const nc = box.querySelector('.conv'); if (nc && convWasAtEnd) nc.scrollTop = nc.scrollHeight;
 }
 
 async function refresh() {
@@ -216,7 +236,10 @@ $('newtask').onsubmit = async (ev) => {
 $('auditFilter').oninput = renderAudit;
 refresh();
 setInterval(refresh, 10000);
-setInterval(() => { if (selected && !document.hidden) renderDetail().catch(report); }, 3000);
+setInterval(() => {
+  const t = tasksCache.find((x) => x.id === selected);
+  if (t && !document.hidden && short(t.state) === 'running') renderDetail().catch(report);
+}, 3000);
 </script>
 </body>
 </html>
