@@ -1,0 +1,273 @@
+syntax = "proto3";
+
+package aejar.v1;
+
+import "aejar/v1/types.proto";
+import "google/api/annotations.proto";
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/eyanshu1997/aejar/gen/aejar/v1;aejarv1";
+
+// TaskService manages tasks. The web UI, the Discord bot and the CLI all use it.
+service TaskService {
+  rpc CreateTask(CreateTaskRequest) returns (Task) {
+    option (google.api.http) = {
+      post: "/v1/tasks"
+      body: "*"
+    };
+  }
+  rpc GetTask(GetTaskRequest) returns (Task) {
+    option (google.api.http) = {get: "/v1/tasks/{id}"};
+  }
+  rpc ListTasks(ListTasksRequest) returns (ListTasksResponse) {
+    option (google.api.http) = {get: "/v1/tasks"};
+  }
+  rpc SetPriority(SetPriorityRequest) returns (Task) {
+    option (google.api.http) = {
+      post: "/v1/tasks/{id}:prio"
+      body: "*"
+    };
+  }
+  rpc PauseTask(PauseTaskRequest) returns (Task) {
+    option (google.api.http) = {
+      post: "/v1/tasks/{id}:pause"
+      body: "*"
+    };
+  }
+  rpc ResumeTask(ResumeTaskRequest) returns (Task) {
+    option (google.api.http) = {
+      post: "/v1/tasks/{id}:resume"
+      body: "*"
+    };
+  }
+  rpc SummarizeTask(SummarizeTaskRequest) returns (TaskSummary) {
+    option (google.api.http) = {get: "/v1/tasks/{id}/summary"};
+  }
+  // SendToTask delivers a message into the task's Claude session (Discord
+  // /say, thread replies, coherence comments). Queued while the session is
+  // not running; delivered when it next starts.
+  rpc SendToTask(SendToTaskRequest) returns (SendToTaskResponse) {
+    option (google.api.http) = {
+      post: "/v1/tasks/{id}:say"
+      body: "*"
+    };
+  }
+}
+
+message CreateTaskRequest {
+  string title = 1;
+  string prompt = 2;
+  TaskClass class = 3;
+  string profile = 4;
+  string doc_folder = 5;
+}
+
+message GetTaskRequest {
+  string id = 1;
+}
+
+message ListTasksRequest {
+  // Empty means all states.
+  repeated TaskState states = 1;
+}
+
+message ListTasksResponse {
+  repeated Task tasks = 1;
+}
+
+message SetPriorityRequest {
+  string id = 1;
+  int32 user_bump = 2;
+}
+
+message PauseTaskRequest {
+  string id = 1;
+}
+
+message ResumeTaskRequest {
+  string id = 1;
+}
+
+message SummarizeTaskRequest {
+  string id = 1;
+}
+
+message SendToTaskRequest {
+  string id = 1;
+  string text = 2;
+  // Event kind shown to Claude: chat (default), comment, action_result.
+  string kind = 3;
+}
+
+message SendToTaskResponse {
+  string event_id = 1;
+  // True when delivered now; false when queued for the next session start.
+  bool delivered = 2;
+}
+
+message TaskSummary {
+  Task task = 1;
+  repeated AuditEvent recent_events = 2;
+  repeated Approval pending_approvals = 3;
+}
+
+// ApprovalService is the owner's approval gate.
+service ApprovalService {
+  rpc RequestApproval(RequestApprovalRequest) returns (Approval) {
+    option (google.api.http) = {
+      post: "/v1/approvals"
+      body: "*"
+    };
+  }
+  rpc DecideApproval(DecideApprovalRequest) returns (Approval) {
+    option (google.api.http) = {
+      post: "/v1/approvals/{id}:decide"
+      body: "*"
+    };
+  }
+  rpc GetApproval(GetApprovalRequest) returns (Approval) {
+    option (google.api.http) = {get: "/v1/approvals/{id}"};
+  }
+  rpc ListApprovals(ListApprovalsRequest) returns (ListApprovalsResponse) {
+    option (google.api.http) = {get: "/v1/approvals"};
+  }
+}
+
+message RequestApprovalRequest {
+  string task_id = 1;
+  ApprovalClass class = 2;
+  string summary = 3;
+  google.protobuf.Struct payload = 4;
+  // Required for ACTION approvals.
+  string tool_name = 5;
+}
+
+message DecideApprovalRequest {
+  string id = 1;
+  bool approve = 2;
+  string reason = 3;
+  // Must match the stored hash, so the decision is about what the owner saw.
+  string payload_hash = 4;
+}
+
+message GetApprovalRequest {
+  string id = 1;
+}
+
+message ListApprovalsRequest {
+  // Empty means all states.
+  repeated ApprovalState states = 1;
+  string task_id = 2;
+}
+
+message ListApprovalsResponse {
+  repeated Approval approvals = 1;
+}
+
+// AuditService exposes the hash-chained audit log.
+service AuditService {
+  rpc ListAuditEvents(ListAuditEventsRequest) returns (ListAuditEventsResponse) {
+    option (google.api.http) = {get: "/v1/audit"};
+  }
+  rpc VerifyAudit(VerifyAuditRequest) returns (VerifyAuditResponse) {
+    option (google.api.http) = {get: "/v1/audit:verify"};
+  }
+}
+
+message ListAuditEventsRequest {
+  // Return events with seq greater than this.
+  int64 after_seq = 1;
+  int32 limit = 2;
+  string subject = 3;
+}
+
+message ListAuditEventsResponse {
+  repeated AuditEvent events = 1;
+}
+
+message VerifyAuditRequest {}
+
+message VerifyAuditResponse {
+  bool ok = 1;
+  int64 events = 2;
+  // First seq that failed verification, 0 when ok.
+  int64 broken_at_seq = 3;
+  string head_hash = 4;
+}
+
+// OpsService reports scheduler and system state.
+service OpsService {
+  rpc GetStatus(GetStatusRequest) returns (Status) {
+    option (google.api.http) = {get: "/v1/status"};
+  }
+  // Changing the cap does not apply it; it creates a POLICY approval.
+  rpc RequestCapChange(RequestCapChangeRequest) returns (Approval) {
+    option (google.api.http) = {
+      post: "/v1/status:cap"
+      body: "*"
+    };
+  }
+}
+
+message GetStatusRequest {}
+
+message Status {
+  int32 cap = 1;
+  int32 running = 2;
+  int32 queued = 3;
+  int32 waiting = 4;
+  google.protobuf.Timestamp limit_blocked_until = 5;
+  int32 pending_approvals = 6;
+}
+
+message RequestCapChangeRequest {
+  int32 cap = 1;
+}
+
+// HookService receives Claude Code HTTP hooks. Claude Code posts its hook
+// JSON as the body; the response follows Claude Code's hook output schema.
+service HookService {
+  rpc ClaudeHook(ClaudeHookRequest) returns (ClaudeHookResponse) {
+    option (google.api.http) = {
+      post: "/hooks/claude/{event}"
+      body: "*"
+    };
+  }
+}
+
+// ClaudeHookRequest mirrors the Claude Code hook input fields aejar uses.
+// Unknown fields are discarded by the gateway.
+message ClaudeHookRequest {
+  // Route segment: pre-tool, post-tool, stop, stop-failure, notification,
+  // session-start, session-end.
+  string event = 1;
+  string session_id = 2;
+  string hook_event_name = 3;
+  string transcript_path = 4;
+  string cwd = 5;
+  string permission_mode = 6;
+  string tool_name = 7;
+  google.protobuf.Struct tool_input = 8;
+  // StopFailure error type, e.g. rate_limit.
+  string error = 9;
+  string error_details = 10;
+  string last_assistant_message = 11;
+  string notification_type = 12;
+  string message = 13;
+  // SessionStart source: startup, resume, fork.
+  string source = 14;
+  string reason = 15;
+}
+
+message ClaudeHookResponse {
+  HookSpecificOutput hook_specific_output = 1;
+}
+
+message HookSpecificOutput {
+  string hook_event_name = 1;
+  // allow, deny, ask, defer
+  string permission_decision = 2;
+  string permission_decision_reason = 3;
+  string additional_context = 4;
+}

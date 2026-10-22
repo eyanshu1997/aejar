@@ -1,0 +1,8 @@
+{
+  "name": "aejar-mcp",
+  "private": true,
+  "type": "module",
+  "description": "aejar MCP server for session containers: channel for pushed events plus approval tools",
+  "scripts": { "test": "node --test" },
+  "dependencies": { "@modelcontextprotocol/sdk": "1.32.1" }
+}

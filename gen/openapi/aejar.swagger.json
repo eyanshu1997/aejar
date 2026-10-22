@@ -1,0 +1,1148 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "aejar/v1/types.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "TaskService"
+    },
+    {
+      "name": "ApprovalService"
+    },
+    {
+      "name": "AuditService"
+    },
+    {
+      "name": "OpsService"
+    },
+    {
+      "name": "HookService"
+    },
+    {
+      "name": "SpawnerService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/hooks/claude/{event}": {
+      "post": {
+        "operationId": "HookService_ClaudeHook",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ClaudeHookResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googleRpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "event",
+            "description": "Route segment: pre-tool, post-tool, stop, stop-failure, notification,\nsession-start, session-end.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/HookServiceClaudeHookBody"
+            }
+          }
+        ],
+        "tags": [
+          "HookService"
+        ]
+      }
+    },
+    "/v1/approvals": {
+      "get": {
+        "operationId": "ApprovalService_ListApprovals",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListApprovalsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googleRpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "states",
+            "description": "Empty means all states.",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "APPROVAL_STATE_UNSPECIFIED",
+                "APPROVAL_STATE_PENDING",
+                "APPROVAL_STATE_APPROVED",
+                "APPROVAL_STATE_REJECTED",
+                "APPROVAL_STATE_EXPIRED"
+              ]
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "taskId",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ApprovalService"
+        ]
+      },
+      "post": {
+        "operationId": "ApprovalService_RequestApproval",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1Approval"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googleRpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1RequestApprovalRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ApprovalService"
+        ]
+      }
+    },
+    "/v1/approvals/{id}": {
+      "get": {
+        "operationId": "ApprovalService_GetApproval",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1Approval"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googleRpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ApprovalService"
+        ]
+      }
+    },
+    "/v1/approvals/{id}:decide": {
+      "post": {
+        "operationId": "ApprovalService_DecideApproval",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1Approval"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googleRpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ApprovalServiceDecideApprovalBody"
+            }
+          }
+        ],
+        "tags": [
+          "ApprovalService"
+        ]
+      }
+    },
+    "/v1/audit": {
+      "get": {
+        "operationId": "AuditService_ListAuditEvents",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListAuditEventsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googleRpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "afterSeq",
+            "description": "Return events with seq greater than this.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "subject",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "AuditService"
+        ]
+      }
+    },
+    "/v1/audit:verify": {
+      "get": {
+        "operationId": "AuditService_VerifyAudit",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1VerifyAuditResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googleRpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "AuditService"
+        ]
+      }
+    },
+    "/v1/status": {
+      "get": {
+        "operationId": "OpsService_GetStatus",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/aejarV1Status"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googleRpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "OpsService"
+        ]
+      }
+    },
+    "/v1/status:cap": {
+      "post": {
+        "summary": "Changing the cap does not apply it; it creates a POLICY approval.",
+        "operationId": "OpsService_RequestCapChange",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1Approval"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googleRpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1RequestCapChangeRequest"
+            }
+          }
+        ],
+        "tags": [
+          "OpsService"
+        ]
+      }
+    },
+    "/v1/tasks": {
+      "get": {
+        "operationId": "TaskService_ListTasks",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListTasksResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googleRpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "states",
+            "description": "Empty means all states.\n\n - TASK_STATE_WAITING: Blocked on something external (approval, reply, CI); holds no slot.",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "TASK_STATE_UNSPECIFIED",
+                "TASK_STATE_QUEUED",
+                "TASK_STATE_RUNNING",
+                "TASK_STATE_WAITING",
+                "TASK_STATE_PREEMPTED",
+                "TASK_STATE_LIMIT_BLOCKED",
+                "TASK_STATE_PAUSED",
+                "TASK_STATE_DONE",
+                "TASK_STATE_FAILED",
+                "TASK_STATE_REJECTED"
+              ]
+            },
+            "collectionFormat": "multi"
+          }
+        ],
+        "tags": [
+          "TaskService"
+        ]
+      },
+      "post": {
+        "operationId": "TaskService_CreateTask",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1Task"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googleRpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1CreateTaskRequest"
+            }
+          }
+        ],
+        "tags": [
+          "TaskService"
+        ]
+      }
+    },
+    "/v1/tasks/{id}": {
+      "get": {
+        "operationId": "TaskService_GetTask",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1Task"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googleRpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "TaskService"
+        ]
+      }
+    },
+    "/v1/tasks/{id}/summary": {
+      "get": {
+        "operationId": "TaskService_SummarizeTask",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1TaskSummary"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googleRpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "TaskService"
+        ]
+      }
+    },
+    "/v1/tasks/{id}:pause": {
+      "post": {
+        "operationId": "TaskService_PauseTask",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1Task"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googleRpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/TaskServicePauseTaskBody"
+            }
+          }
+        ],
+        "tags": [
+          "TaskService"
+        ]
+      }
+    },
+    "/v1/tasks/{id}:prio": {
+      "post": {
+        "operationId": "TaskService_SetPriority",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1Task"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googleRpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/TaskServiceSetPriorityBody"
+            }
+          }
+        ],
+        "tags": [
+          "TaskService"
+        ]
+      }
+    },
+    "/v1/tasks/{id}:resume": {
+      "post": {
+        "operationId": "TaskService_ResumeTask",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1Task"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googleRpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/TaskServiceResumeTaskBody"
+            }
+          }
+        ],
+        "tags": [
+          "TaskService"
+        ]
+      }
+    },
+    "/v1/tasks/{id}:say": {
+      "post": {
+        "summary": "SendToTask delivers a message into the task's Claude session (Discord\n/say, thread replies, coherence comments). Queued while the session is\nnot running; delivered when it next starts.",
+        "operationId": "TaskService_SendToTask",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1SendToTaskResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googleRpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/TaskServiceSendToTaskBody"
+            }
+          }
+        ],
+        "tags": [
+          "TaskService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "ApprovalServiceDecideApprovalBody": {
+      "type": "object",
+      "properties": {
+        "approve": {
+          "type": "boolean"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "payloadHash": {
+          "type": "string",
+          "description": "Must match the stored hash, so the decision is about what the owner saw."
+        }
+      }
+    },
+    "HookServiceClaudeHookBody": {
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string"
+        },
+        "hookEventName": {
+          "type": "string"
+        },
+        "transcriptPath": {
+          "type": "string"
+        },
+        "cwd": {
+          "type": "string"
+        },
+        "permissionMode": {
+          "type": "string"
+        },
+        "toolName": {
+          "type": "string"
+        },
+        "toolInput": {
+          "type": "object"
+        },
+        "error": {
+          "type": "string",
+          "description": "StopFailure error type, e.g. rate_limit."
+        },
+        "errorDetails": {
+          "type": "string"
+        },
+        "lastAssistantMessage": {
+          "type": "string"
+        },
+        "notificationType": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string",
+          "description": "SessionStart source: startup, resume, fork."
+        },
+        "reason": {
+          "type": "string"
+        }
+      },
+      "description": "ClaudeHookRequest mirrors the Claude Code hook input fields aejar uses.\nUnknown fields are discarded by the gateway."
+    },
+    "TaskServicePauseTaskBody": {
+      "type": "object"
+    },
+    "TaskServiceResumeTaskBody": {
+      "type": "object"
+    },
+    "TaskServiceSendToTaskBody": {
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string",
+          "description": "Event kind shown to Claude: chat (default), comment, action_result."
+        }
+      }
+    },
+    "TaskServiceSetPriorityBody": {
+      "type": "object",
+      "properties": {
+        "userBump": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "aejarV1Status": {
+      "type": "object",
+      "properties": {
+        "cap": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "running": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "queued": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "waiting": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "limitBlockedUntil": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "pendingApprovals": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "googleRpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "protobufNullValue": {
+      "type": "string",
+      "enum": [
+        "NULL_VALUE"
+      ],
+      "default": "NULL_VALUE",
+      "description": "`NullValue` is a singleton enumeration to represent the null value for the\n`Value` type union.\n\nThe JSON representation for `NullValue` is JSON `null`.\n\n - NULL_VALUE: Null value."
+    },
+    "v1Approval": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "taskId": {
+          "type": "string"
+        },
+        "class": {
+          "$ref": "#/definitions/v1ApprovalClass"
+        },
+        "state": {
+          "$ref": "#/definitions/v1ApprovalState"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "payload": {
+          "type": "object",
+          "description": "Exact payload the approval is bound to."
+        },
+        "payloadHash": {
+          "type": "string",
+          "description": "sha256 of the canonical JSON of payload."
+        },
+        "requestedBy": {
+          "type": "string"
+        },
+        "decidedBy": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "decidedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "toolName": {
+          "type": "string",
+          "description": "For ACTION approvals: the tool the payload is for."
+        }
+      }
+    },
+    "v1ApprovalClass": {
+      "type": "string",
+      "enum": [
+        "APPROVAL_CLASS_UNSPECIFIED",
+        "APPROVAL_CLASS_PLAN",
+        "APPROVAL_CLASS_ACTION",
+        "APPROVAL_CLASS_DEPLOY",
+        "APPROVAL_CLASS_POLICY",
+        "APPROVAL_CLASS_QUESTION"
+      ],
+      "default": "APPROVAL_CLASS_UNSPECIFIED",
+      "description": " - APPROVAL_CLASS_PLAN: Proceed with a plan doc.\n - APPROVAL_CLASS_ACTION: One specific tool call with an exact payload.\n - APPROVAL_CLASS_POLICY: Change to caps, tiers, allowlists.\n - APPROVAL_CLASS_QUESTION: A yes/no question with no capability attached."
+    },
+    "v1ApprovalState": {
+      "type": "string",
+      "enum": [
+        "APPROVAL_STATE_UNSPECIFIED",
+        "APPROVAL_STATE_PENDING",
+        "APPROVAL_STATE_APPROVED",
+        "APPROVAL_STATE_REJECTED",
+        "APPROVAL_STATE_EXPIRED"
+      ],
+      "default": "APPROVAL_STATE_UNSPECIFIED"
+    },
+    "v1AuditEvent": {
+      "type": "object",
+      "properties": {
+        "seq": {
+          "type": "string",
+          "format": "int64"
+        },
+        "ts": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "actor": {
+          "type": "string"
+        },
+        "action": {
+          "type": "string"
+        },
+        "subject": {
+          "type": "string"
+        },
+        "payload": {
+          "type": "object"
+        },
+        "prevHash": {
+          "type": "string"
+        },
+        "hash": {
+          "type": "string"
+        }
+      }
+    },
+    "v1ClaudeHookResponse": {
+      "type": "object",
+      "properties": {
+        "hookSpecificOutput": {
+          "$ref": "#/definitions/v1HookSpecificOutput"
+        }
+      }
+    },
+    "v1CreateTaskRequest": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "prompt": {
+          "type": "string"
+        },
+        "class": {
+          "$ref": "#/definitions/v1TaskClass"
+        },
+        "profile": {
+          "type": "string"
+        },
+        "docFolder": {
+          "type": "string"
+        }
+      }
+    },
+    "v1HookSpecificOutput": {
+      "type": "object",
+      "properties": {
+        "hookEventName": {
+          "type": "string"
+        },
+        "permissionDecision": {
+          "type": "string",
+          "title": "allow, deny, ask, defer"
+        },
+        "permissionDecisionReason": {
+          "type": "string"
+        },
+        "additionalContext": {
+          "type": "string"
+        }
+      }
+    },
+    "v1ListApprovalsResponse": {
+      "type": "object",
+      "properties": {
+        "approvals": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Approval"
+          }
+        }
+      }
+    },
+    "v1ListAuditEventsResponse": {
+      "type": "object",
+      "properties": {
+        "events": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1AuditEvent"
+          }
+        }
+      }
+    },
+    "v1ListTasksResponse": {
+      "type": "object",
+      "properties": {
+        "tasks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Task"
+          }
+        }
+      }
+    },
+    "v1RequestApprovalRequest": {
+      "type": "object",
+      "properties": {
+        "taskId": {
+          "type": "string"
+        },
+        "class": {
+          "$ref": "#/definitions/v1ApprovalClass"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "payload": {
+          "type": "object"
+        },
+        "toolName": {
+          "type": "string",
+          "description": "Required for ACTION approvals."
+        }
+      }
+    },
+    "v1RequestCapChangeRequest": {
+      "type": "object",
+      "properties": {
+        "cap": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "v1SendToTaskResponse": {
+      "type": "object",
+      "properties": {
+        "eventId": {
+          "type": "string"
+        },
+        "delivered": {
+          "type": "boolean",
+          "description": "True when delivered now; false when queued for the next session start."
+        }
+      }
+    },
+    "v1Task": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "prompt": {
+          "type": "string"
+        },
+        "class": {
+          "$ref": "#/definitions/v1TaskClass"
+        },
+        "state": {
+          "$ref": "#/definitions/v1TaskState"
+        },
+        "userBump": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Owner-set adjustment added to the computed score."
+        },
+        "score": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Computed priority score at read time."
+        },
+        "waitReason": {
+          "type": "string",
+          "description": "Why the task is waiting, when state is WAITING."
+        },
+        "profile": {
+          "type": "string",
+          "description": "Session profile: plan, research, mail, action, project."
+        },
+        "claudeSessionId": {
+          "type": "string",
+          "description": "Claude Code session id, used for --resume."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "docFolder": {
+          "type": "string",
+          "description": "Coherence folder holding this task's docs."
+        }
+      }
+    },
+    "v1TaskClass": {
+      "type": "string",
+      "enum": [
+        "TASK_CLASS_UNSPECIFIED",
+        "TASK_CLASS_P0",
+        "TASK_CLASS_P1",
+        "TASK_CLASS_P2",
+        "TASK_CLASS_P3"
+      ],
+      "default": "TASK_CLASS_UNSPECIFIED",
+      "description": "TaskClass sets a task's base priority. See plan.html §5.\n\n - TASK_CLASS_P0: Interactive, from the owner, right now.\n - TASK_CLASS_P1: Normal.\n - TASK_CLASS_P2: Background or long-running.\n - TASK_CLASS_P3: Cron housekeeping."
+    },
+    "v1TaskState": {
+      "type": "string",
+      "enum": [
+        "TASK_STATE_UNSPECIFIED",
+        "TASK_STATE_QUEUED",
+        "TASK_STATE_RUNNING",
+        "TASK_STATE_WAITING",
+        "TASK_STATE_PREEMPTED",
+        "TASK_STATE_LIMIT_BLOCKED",
+        "TASK_STATE_PAUSED",
+        "TASK_STATE_DONE",
+        "TASK_STATE_FAILED",
+        "TASK_STATE_REJECTED"
+      ],
+      "default": "TASK_STATE_UNSPECIFIED",
+      "description": " - TASK_STATE_WAITING: Blocked on something external (approval, reply, CI); holds no slot."
+    },
+    "v1TaskSummary": {
+      "type": "object",
+      "properties": {
+        "task": {
+          "$ref": "#/definitions/v1Task"
+        },
+        "recentEvents": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1AuditEvent"
+          }
+        },
+        "pendingApprovals": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Approval"
+          }
+        }
+      }
+    },
+    "v1VerifyAuditResponse": {
+      "type": "object",
+      "properties": {
+        "ok": {
+          "type": "boolean"
+        },
+        "events": {
+          "type": "string",
+          "format": "int64"
+        },
+        "brokenAtSeq": {
+          "type": "string",
+          "format": "int64",
+          "description": "First seq that failed verification, 0 when ok."
+        },
+        "headHash": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

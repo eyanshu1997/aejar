@@ -1,0 +1,124 @@
+syntax = "proto3";
+
+package aejar.v1;
+
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/eyanshu1997/aejar/gen/aejar/v1;aejarv1";
+
+// TaskClass sets a task's base priority. See plan.html §5.
+enum TaskClass {
+  TASK_CLASS_UNSPECIFIED = 0;
+  // Interactive, from the owner, right now.
+  TASK_CLASS_P0 = 1;
+  // Normal.
+  TASK_CLASS_P1 = 2;
+  // Background or long-running.
+  TASK_CLASS_P2 = 3;
+  // Cron housekeeping.
+  TASK_CLASS_P3 = 4;
+}
+
+enum TaskState {
+  TASK_STATE_UNSPECIFIED = 0;
+  TASK_STATE_QUEUED = 1;
+  TASK_STATE_RUNNING = 2;
+  // Blocked on something external (approval, reply, CI); holds no slot.
+  TASK_STATE_WAITING = 3;
+  TASK_STATE_PREEMPTED = 4;
+  TASK_STATE_LIMIT_BLOCKED = 5;
+  TASK_STATE_PAUSED = 6;
+  TASK_STATE_DONE = 7;
+  TASK_STATE_FAILED = 8;
+  TASK_STATE_REJECTED = 9;
+}
+
+// Tier is the risk tier of an action. See integrations.html §2.
+enum Tier {
+  TIER_UNSPECIFIED = 0;
+  // Local compute or read of aejar's own data.
+  TIER_R0 = 1;
+  // External read.
+  TIER_R1 = 2;
+  // Reversible write in the owner's own space.
+  TIER_R2 = 3;
+  // External effect; per-action owner approval.
+  TIER_R3 = 4;
+  // Forbidden.
+  TIER_R4 = 5;
+}
+
+enum ApprovalClass {
+  APPROVAL_CLASS_UNSPECIFIED = 0;
+  // Proceed with a plan doc.
+  APPROVAL_CLASS_PLAN = 1;
+  // One specific tool call with an exact payload.
+  APPROVAL_CLASS_ACTION = 2;
+  APPROVAL_CLASS_DEPLOY = 3;
+  // Change to caps, tiers, allowlists.
+  APPROVAL_CLASS_POLICY = 4;
+  // A yes/no question with no capability attached.
+  APPROVAL_CLASS_QUESTION = 5;
+}
+
+enum ApprovalState {
+  APPROVAL_STATE_UNSPECIFIED = 0;
+  APPROVAL_STATE_PENDING = 1;
+  APPROVAL_STATE_APPROVED = 2;
+  APPROVAL_STATE_REJECTED = 3;
+  APPROVAL_STATE_EXPIRED = 4;
+}
+
+message Task {
+  string id = 1;
+  string title = 2;
+  string prompt = 3;
+  TaskClass class = 4;
+  TaskState state = 5;
+  // Owner-set adjustment added to the computed score.
+  int32 user_bump = 6;
+  // Computed priority score at read time.
+  int32 score = 7;
+  // Why the task is waiting, when state is WAITING.
+  string wait_reason = 8;
+  // Session profile: plan, research, mail, action, project.
+  string profile = 9;
+  // Claude Code session id, used for --resume.
+  string claude_session_id = 10;
+  google.protobuf.Timestamp created_at = 11;
+  google.protobuf.Timestamp updated_at = 12;
+  // Coherence folder holding this task's docs.
+  string doc_folder = 13;
+}
+
+message Approval {
+  string id = 1;
+  string task_id = 2;
+  ApprovalClass class = 3;
+  ApprovalState state = 4;
+  string summary = 5;
+  // Exact payload the approval is bound to.
+  google.protobuf.Struct payload = 6;
+  // sha256 of the canonical JSON of payload.
+  string payload_hash = 7;
+  string requested_by = 8;
+  string decided_by = 9;
+  string reason = 10;
+  google.protobuf.Timestamp created_at = 11;
+  google.protobuf.Timestamp decided_at = 12;
+  google.protobuf.Timestamp expires_at = 13;
+  // For ACTION approvals: the tool the payload is for.
+  string tool_name = 14;
+}
+
+message AuditEvent {
+  int64 seq = 1;
+  google.protobuf.Timestamp ts = 2;
+  string actor = 3;
+  string action = 4;
+  string subject = 5;
+  google.protobuf.Struct payload = 6;
+  string prev_hash = 7;
+  string hash = 8;
+}

@@ -1,0 +1,99 @@
+# aejar, run by the `aejar` user's rootless Docker:
+#   cd ~/aejar/deploy && docker compose --env-file aejar.env up -d --build
+#
+# Host ports (localhost only):
+#   9010  nginx -> coherence   (tunnel target for DOCS_HOST)
+#   9011  nginx -> aejard      (tunnel target for AEJAR_HOST)
+#   9012  aejard               (owner CLI over SSH, owner token)
+name: aejar
+
+networks:
+  edge: {}            # nginx, oauth2-proxy, coherence, aejard
+  core: {}            # aejard, spawner
+  sessions:           # session containers, aejard, coherence
+    name: aejar_sessions
+
+services:
+  nginx:
+    image: nginx:1.31.8-alpine
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:9010:9010"
+      - "127.0.0.1:9011:9011"
+    volumes:
+      - ./nginx/templates:/etc/nginx/templates:ro
+      - ./nginx/aejar-auth.inc:/etc/nginx/conf.d/aejar-auth.inc:ro
+    environment:
+      AEJAR_HOST: ${AEJAR_HOST}
+      DOCS_HOST: ${DOCS_HOST}
+    networks: [edge]
+    depends_on: [oauth2-proxy, aejard, coherence]
+
+  oauth2-proxy:
+    image: quay.io/oauth2-proxy/oauth2-proxy:v7.15.4
+    restart: unless-stopped
+    command: ["--config=/etc/oauth2-proxy/oauth2-proxy.cfg"]
+    env_file: ${AEJAR_DATA}/secrets/oauth2-proxy.env
+    environment:
+      OAUTH2_PROXY_WHITELIST_DOMAINS: ${AEJAR_HOST},${DOCS_HOST}
+    volumes:
+      - ./oauth2-proxy/oauth2-proxy.cfg:/etc/oauth2-proxy/oauth2-proxy.cfg:ro
+      # One allowed Google account per line; written by deploy.sh from OWNER_EMAILS.
+      - ${AEJAR_DATA}/config/emails.txt:/etc/oauth2-proxy/emails.txt:ro
+    networks: [edge]
+
+  coherence:
+    build: { context: .., dockerfile: images/coherence/Dockerfile }
+    restart: unless-stopped
+    environment:
+      DOC_HOST: ${DOCS_HOST}
+      DOC_PORT: "443"
+      DOC_SCHEME: https
+    volumes:
+      - ${AEJAR_DATA}/coherence:/data
+    networks: [edge, sessions]
+
+  aejard:
+    build: { context: .., dockerfile: images/aejard/Dockerfile }
+    restart: unless-stopped
+    command:
+      - -listen=:9111
+      - -data=/data
+      - -sessions=/sessions
+      - -owner-emails=${OWNER_EMAILS}
+      - -oidc-client-id=${GOOGLE_CLIENT_ID}
+      - -spawner=spawner:9200
+      - -spawner-token-file=/data/secrets/spawner_token
+    ports:
+      - "127.0.0.1:9012:9111"
+    volumes:
+      - ${AEJAR_DATA}/db:/data
+      - ${AEJAR_DATA}/secrets/spawner_token:/data/secrets/spawner_token:ro
+      - ${AEJAR_DATA}/sessions:/sessions
+    networks: [edge, core, sessions]
+
+  spawner:
+    build: { context: .., dockerfile: images/spawner/Dockerfile }
+    restart: unless-stopped
+    command:
+      - -listen=:9200
+      - -token-file=/secrets/spawner_token
+      - -claude-token-file=/secrets/claude_oauth_token
+      - -image=aejar-session:latest
+      - -sessions=/sessions
+      - -host-sessions=${AEJAR_DATA}/sessions
+      - -network=aejar_sessions
+    environment:
+      DOCKER_HOST: unix:///docker.sock
+    volumes:
+      - ${DOCKER_SOCK}:/docker.sock
+      - ${AEJAR_DATA}/sessions:/sessions
+      - ${AEJAR_DATA}/secrets/spawner_token:/secrets/spawner_token:ro
+      - ${AEJAR_DATA}/secrets/claude_oauth_token:/secrets/claude_oauth_token:ro
+    networks: [core]
+
+  # Built here, started only by the spawner.
+  session-image:
+    image: aejar-session:latest
+    build: { context: .., dockerfile: images/session/Dockerfile }
+    profiles: [build-only]

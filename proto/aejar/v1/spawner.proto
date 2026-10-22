@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+package aejar.v1;
+
+option go_package = "github.com/eyanshu1997/aejar/gen/aejar/v1;aejarv1";
+
+// SpawnerService is internal: only aejard calls it, over the aejar_core
+// network. The spawner is the sole holder of the docker socket and builds
+// every container from a fixed template, so callers cannot choose mounts,
+// images or privileges. It has no HTTP mapping on purpose.
+service SpawnerService {
+  rpc StartSession(StartSessionRequest) returns (StartSessionResponse);
+  rpc StopSession(StopSessionRequest) returns (StopSessionResponse);
+  // SendKeys is the fallback input path when the channel is unavailable.
+  rpc SendKeys(SendKeysRequest) returns (SendKeysResponse);
+  rpc ListSessions(ListSessionsRequest) returns (ListSessionsResponse);
+}
+
+message StartSessionRequest {
+  string task_id = 1;
+  string profile = 2;
+  string prompt = 3;
+  // Set to resume a conversation (claude --resume).
+  string claude_session_id = 4;
+  string session_token = 5;
+}
+
+message StartSessionResponse {
+  string container = 1;
+}
+
+message StopSessionRequest {
+  string task_id = 1;
+  string reason = 2;
+}
+
+message StopSessionResponse {}
+
+message SendKeysRequest {
+  string task_id = 1;
+  string text = 2;
+}
+
+message SendKeysResponse {}
+
+message ListSessionsRequest {}
+
+message ListSessionsResponse {
+  repeated SessionContainer sessions = 1;
+}
+
+message SessionContainer {
+  string task_id = 1;
+  string container = 2;
+  // docker state: running, exited, ...
+  string state = 3;
+}

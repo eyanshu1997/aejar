@@ -1,0 +1,11 @@
+/bin/
+*.db
+*.db-wal
+*.db-shm
+owner.token
+**/node_modules/
+# Design docs hold one deployment's details; they live in the private
+# coherence doc store, not in this public repo.
+/docs/
+# Deployment config (copy from aejar.env.example).
+/deploy/aejar.env
