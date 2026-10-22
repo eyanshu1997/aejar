@@ -111,6 +111,29 @@ services:
       - ${AEJAR_DATA}/secrets/claude_oauth_token:/secrets/claude_oauth_token:ro
     networks: [core]
 
+  # Discord bot. Off until the Discord ids are set: add COMPOSE_PROFILES=discord
+  # and the DISCORD_* values to aejar.env.
+  discord:
+    image: aejar-aejard:${AEJAR_VERSION:-latest}
+    profiles: [discord]
+    restart: unless-stopped
+    entrypoint: ["/usr/local/bin/aejar-discord"]
+    command:
+      - -token-file=/secrets/discord_bot_token
+      - -owner-token-file=/owner.token
+      - -aejard=aejard:9111
+      - -guild=${DISCORD_GUILD_ID:-}
+      - -channel=${DISCORD_CHANNEL_ID:-}
+      - -owner=${DISCORD_OWNER_ID:-}
+      - -public-url=https://${AEJAR_HOST}
+      - -state=/state/discord.json
+    volumes:
+      - ${AEJAR_DATA}/secrets/discord_bot_token:/secrets/discord_bot_token:ro
+      - ${AEJAR_DATA}/db/owner.token:/owner.token:ro
+      - ${AEJAR_DATA}/discord:/state
+    depends_on: [aejard]
+    networks: [core]
+
   # Built here, started only by the spawner.
   session-image:
     image: aejar-session:${AEJAR_VERSION:-latest}
