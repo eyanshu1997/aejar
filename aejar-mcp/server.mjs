@@ -67,6 +67,17 @@ const tools = [
     },
   },
   {
+    name: 'complete_task',
+    description:
+      'Mark this task done when its work is finished (not while waiting for an approval or an answer). ' +
+      'The session ends after this turn; the owner can reopen it by sending a message.',
+    inputSchema: {
+      type: 'object',
+      properties: { summary: { type: 'string', description: 'What was done, in one to three sentences' } },
+      required: ['summary'],
+    },
+  },
+  {
     name: 'get_approval',
     description: 'Check the state of an approval request by id.',
     inputSchema: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'] },
@@ -90,6 +101,10 @@ mcp.setRequestHandler(CallToolRequestSchema, async (req) => {
         `Approval ${a.id} is pending with the owner. Do not retry or work around the blocked action. ` +
         'End your turn now; the result arrives as a channel event.',
       )
+    }
+    if (req.params.name === 'complete_task') {
+      await aejar('POST', '/hooks/claude/task-complete', { message: args.summary ?? '' })
+      return text('Task marked complete. Finish your reply; the session ends after this turn.')
     }
     if (req.params.name === 'get_approval') {
       const a = await aejar('GET', `/v1/approvals/${encodeURIComponent(args.id)}`)

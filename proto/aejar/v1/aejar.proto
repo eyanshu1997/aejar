@@ -44,6 +44,23 @@ service TaskService {
   rpc SummarizeTask(SummarizeTaskRequest) returns (TaskSummary) {
     option (google.api.http) = {get: "/v1/tasks/{id}/summary"};
   }
+  // FinishTask marks a task done and ends its session. Messaging a done
+  // task reopens it with the same conversation.
+  rpc FinishTask(FinishTaskRequest) returns (Task) {
+    option (google.api.http) = {
+      post: "/v1/tasks/{id}:finish"
+      body: "*"
+    };
+  }
+  // GetTranscript returns the task's conversation from Claude Code's own
+  // transcript files, for live and finished tasks.
+  rpc GetTranscript(GetTranscriptRequest) returns (Transcript) {
+    option (google.api.http) = {get: "/v1/tasks/{id}/transcript"};
+  }
+  // GetSessionScreen shows what the task's session terminal shows right now.
+  rpc GetSessionScreen(GetSessionScreenRequest) returns (SessionScreen) {
+    option (google.api.http) = {get: "/v1/tasks/{id}/screen"};
+  }
   // SendToTask delivers a message into the task's Claude session (Discord
   // /say, thread replies, coherence comments). Queued while the session is
   // not running; delivered when it next starts.
@@ -61,6 +78,9 @@ message CreateTaskRequest {
   TaskClass class = 3;
   string profile = 4;
   string doc_folder = 5;
+  // sonnet, opus or haiku; empty uses the profile default (opus for
+  // project, sonnet otherwise).
+  string model = 6;
 }
 
 message GetTaskRequest {
@@ -91,6 +111,44 @@ message ResumeTaskRequest {
 
 message SummarizeTaskRequest {
   string id = 1;
+}
+
+message FinishTaskRequest {
+  string id = 1;
+}
+
+message GetTranscriptRequest {
+  string id = 1;
+  // Most recent entries to return; 0 means 500.
+  int32 limit = 2;
+}
+
+message Transcript {
+  repeated TranscriptEntry entries = 1;
+  // True when older entries were left out.
+  bool truncated = 2;
+}
+
+message TranscriptEntry {
+  google.protobuf.Timestamp ts = 1;
+  // user, assistant
+  string role = 2;
+  // text, tool_use, tool_result
+  string kind = 3;
+  string text = 4;
+  // For tool_use: the tool's name.
+  string tool = 5;
+}
+
+message GetSessionScreenRequest {
+  string id = 1;
+  int32 history_lines = 2;
+}
+
+message SessionScreen {
+  string text = 1;
+  // False when the task has no running session.
+  bool live = 2;
 }
 
 message SendToTaskRequest {

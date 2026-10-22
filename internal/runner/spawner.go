@@ -21,7 +21,7 @@ type Spawner struct {
 func (s *Spawner) Start(ctx context.Context, spec Spec) error {
 	_, err := s.Client.StartSession(ctx, &aejarv1.StartSessionRequest{
 		TaskId: spec.TaskID, Profile: spec.Profile, Prompt: spec.Prompt,
-		ClaudeSessionId: spec.ClaudeSessionID, SessionToken: spec.SessionToken,
+		ClaudeSessionId: spec.ClaudeSessionID, SessionToken: spec.SessionToken, Model: spec.Model,
 	})
 	return err
 }
@@ -34,6 +34,14 @@ func (s *Spawner) Stop(ctx context.Context, taskID, reason string) error {
 func (s *Spawner) Type(ctx context.Context, taskID, text string) error {
 	_, err := s.Client.SendKeys(ctx, &aejarv1.SendKeysRequest{TaskId: taskID, Text: text})
 	return err
+}
+
+func (s *Spawner) Screen(ctx context.Context, taskID string, historyLines int) (string, error) {
+	r, err := s.Client.CaptureScreen(ctx, &aejarv1.CaptureScreenRequest{TaskId: taskID, HistoryLines: int32(historyLines)})
+	if err != nil {
+		return "", err
+	}
+	return r.Text, nil
 }
 
 func (s *Spawner) Deliver(ctx context.Context, taskID string, ev Event) error {

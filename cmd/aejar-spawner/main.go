@@ -39,6 +39,7 @@ func main() {
 		cpus         = flag.String("cpus", "1.5", "CPU limit per session")
 		runtime      = flag.String("runtime", "", "optional OCI runtime (runsc)")
 		dockerBinary = flag.String("docker", "docker", "docker CLI")
+		contextDir   = flag.String("context", "", "reference files copied read-only into every session's /work/context")
 	)
 	flag.Parse()
 	if *hostDir == "" || *tokenFile == "" || *claudeToken == "" {
@@ -52,6 +53,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	claude = spawner.CleanToken(claude)
 	var cohKey string
 	if *coherenceKey != "" {
 		if cohKey, err = readSecret(*coherenceKey); err != nil {
@@ -64,7 +66,7 @@ func main() {
 			Image: *image, LocalSessionsDir: *localDir, HostSessionsDir: *hostDir, Network: *network,
 			AejardURL: *aejardURL, CoherenceURL: *coherenceURL, MemoryMB: *memoryMB, CPUs: *cpus,
 			PidsLimit: 512, Runtime: *runtime, ClaudeToken: claude, CoherenceKey: cohKey,
-			DockerBinary: *dockerBinary, StopTimeoutSec: 30,
+			DockerBinary: *dockerBinary, StopTimeoutSec: 30, ContextDir: *contextDir,
 		},
 		Exec:  spawner.RealExec(*dockerBinary),
 		Chown: os.Lchown,

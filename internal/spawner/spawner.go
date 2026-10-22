@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"time"
 
 	aejarv1 "github.com/eyanshu1997/aejar/gen/aejar/v1"
 	"github.com/eyanshu1997/aejar/internal/policy"
@@ -45,6 +46,9 @@ type Config struct {
 	CoherenceKey   string
 	DockerBinary   string
 	StopTimeoutSec int
+	// ContextDir holds owner-provided reference files (design docs) that
+	// every session gets a read-only copy of in /work/context.
+	ContextDir string
 }
 
 // Exec runs the docker CLI; tests replace it.
@@ -79,6 +83,9 @@ func Validate(req *aejarv1.StartSessionRequest) error {
 	}
 	if req.ClaudeSessionId != "" && !sessionIDRe.MatchString(req.ClaudeSessionId) {
 		return status.Errorf(codes.InvalidArgument, "bad claude session id")
+	}
+	if req.Model != "" && !policy.Models[req.Model] {
+		return status.Errorf(codes.InvalidArgument, "unknown model %q", req.Model)
 	}
 	if !tokenRe.MatchString(req.SessionToken) {
 		return status.Errorf(codes.InvalidArgument, "bad session token")
@@ -145,7 +152,7 @@ func secretEnv(cfg Config, req *aejarv1.StartSessionRequest) []string {
 func Prepare(cfg Config, req *aejarv1.StartSessionRequest, chown func(string, int, int) error) error {
 	files, err := sessioncfg.Generate(sessioncfg.Input{
 		TaskID: req.TaskId, Profile: req.Profile, Prompt: req.Prompt,
-		ClaudeSessionID: req.ClaudeSessionId, AejardURL: cfg.AejardURL,
+		ClaudeSessionID: req.ClaudeSessionId, Model: req.Model, AejardURL: cfg.AejardURL,
 	})
 	if err != nil {
 		return err
@@ -174,6 +181,9 @@ func Prepare(cfg Config, req *aejarv1.StartSessionRequest, chown func(string, in
 			return err
 		}
 	}
+	if err := copyContext(cfg.ContextDir, filepath.Join(root, "work", "context")); err != nil {
+		return err
+	}
 	// A stale socket from a previous run would make the channel server fail.
 	os.Remove(filepath.Join(root, "run", "channel.sock"))
 	for _, d := range []string{"work", "home", "run"} {
@@ -189,12 +199,69 @@ func Prepare(cfg Config, req *aejarv1.StartSessionRequest, chown func(string, in
 	return nil
 }
 
+// copyContext refreshes dst with the regular files directly in src. Symlinks,
+// directories and other special files are skipped. The copies are read-only.
+func copyContext(src, dst string) error {
+	if src == "" {
+		return nil
+	}
+	entries, err := os.ReadDir(src)
+	if errors.Is(err, os.ErrNotExist) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	os.RemoveAll(dst)
+	if err := os.MkdirAll(dst, 0o755); err != nil {
+		return err
+	}
+	for _, e := range entries {
+		if !e.Type().IsRegular() {
+			continue
+		}
+		b, err := os.ReadFile(filepath.Join(src, e.Name()))
+		if err != nil {
+			return err
+		}
+		if err := os.WriteFile(filepath.Join(dst, e.Name()), b, 0o444); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // Spawner implements aejarv1.SpawnerServiceServer.
 type Spawner struct {
 	aejarv1.UnimplementedSpawnerServiceServer
 	Cfg   Config
 	Exec  Exec
 	Chown func(string, int, int) error
+
+	pollInterval time.Duration
+}
+
+// waitGone waits until no container has this name. Containers run with
+// --rm, so after a stop docker may still be removing the old one.
+func (s *Spawner) waitGone(ctx context.Context, name string) error {
+	interval := s.pollInterval
+	if interval == 0 {
+		interval = 500 * time.Millisecond
+	}
+	deadline := time.Now().Add(60 * time.Second)
+	for {
+		if _, err := s.Exec(ctx, nil, "inspect", "--format", "{{.State.Status}}", name); err != nil {
+			return nil // no such container
+		}
+		if time.Now().After(deadline) {
+			return fmt.Errorf("container %s still exists after 60s", name)
+		}
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(interval):
+		}
+	}
 }
 
 func (s *Spawner) StartSession(ctx context.Context, req *aejarv1.StartSessionRequest) (*aejarv1.StartSessionResponse, error) {
@@ -204,8 +271,12 @@ func (s *Spawner) StartSession(ctx context.Context, req *aejarv1.StartSessionReq
 	if err := Prepare(s.Cfg, req, s.Chown); err != nil {
 		return nil, status.Errorf(codes.Internal, "prepare session: %v", err)
 	}
-	// A leftover container (crash, restart) is replaced.
+	// A leftover container (crash, restart) is replaced; wait until docker
+	// has finished removing it or the name is still taken.
 	s.Exec(ctx, nil, "rm", "-f", ContainerName(req.TaskId))
+	if err := s.waitGone(ctx, ContainerName(req.TaskId)); err != nil {
+		return nil, status.Errorf(codes.Unavailable, "start session: %v", err)
+	}
 	if _, err := s.Exec(ctx, secretEnv(s.Cfg, req), RunArgs(s.Cfg, req)...); err != nil {
 		return nil, status.Errorf(codes.Internal, "start session: %v", err)
 	}
@@ -240,6 +311,23 @@ func (s *Spawner) SendKeys(ctx context.Context, req *aejarv1.SendKeysRequest) (*
 	return &aejarv1.SendKeysResponse{}, nil
 }
 
+func (s *Spawner) CaptureScreen(ctx context.Context, req *aejarv1.CaptureScreenRequest) (*aejarv1.CaptureScreenResponse, error) {
+	if !taskIDRe.MatchString(req.TaskId) {
+		return nil, status.Errorf(codes.InvalidArgument, "bad task id %q", req.TaskId)
+	}
+	hist := req.HistoryLines
+	if hist < 0 || hist > 2000 {
+		hist = 200
+	}
+	// -p prints the pane as text (no escape sequences unless -e).
+	out, err := s.Exec(ctx, nil, "exec", "-u", fmt.Sprint(AgentUID), ContainerName(req.TaskId),
+		"tmux", "capture-pane", "-p", "-t", "main", "-S", fmt.Sprintf("-%d", hist))
+	if err != nil {
+		return nil, status.Errorf(codes.Unavailable, "capture: %v", err)
+	}
+	return &aejarv1.CaptureScreenResponse{Text: string(out)}, nil
+}
+
 func (s *Spawner) ListSessions(ctx context.Context, _ *aejarv1.ListSessionsRequest) (*aejarv1.ListSessionsResponse, error) {
 	out, err := s.Exec(ctx, nil, "ps", "-a", "--filter", "label=aejar.managed=true",
 		"--format", `{{.Label "aejar.task"}}	{{.Names}}	{{.State}}`)
@@ -254,4 +342,11 @@ func (s *Spawner) ListSessions(ctx context.Context, _ *aejarv1.ListSessionsReque
 		}
 	}
 	return resp, nil
+}
+
+// CleanToken removes all whitespace from a token secret. Tokens never contain
+// whitespace, but a value copied from a wrapped terminal line does, and Claude
+// Code rejects a header with a line break in it.
+func CleanToken(s string) string {
+	return strings.Join(strings.Fields(s), "")
 }

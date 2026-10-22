@@ -445,6 +445,44 @@
         ]
       }
     },
+    "/v1/tasks/{id}/screen": {
+      "get": {
+        "summary": "GetSessionScreen shows what the task's session terminal shows right now.",
+        "operationId": "TaskService_GetSessionScreen",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1SessionScreen"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googleRpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "historyLines",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "TaskService"
+        ]
+      }
+    },
     "/v1/tasks/{id}/summary": {
       "get": {
         "operationId": "TaskService_SummarizeTask",
@@ -468,6 +506,84 @@
             "in": "path",
             "required": true,
             "type": "string"
+          }
+        ],
+        "tags": [
+          "TaskService"
+        ]
+      }
+    },
+    "/v1/tasks/{id}/transcript": {
+      "get": {
+        "summary": "GetTranscript returns the task's conversation from Claude Code's own\ntranscript files, for live and finished tasks.",
+        "operationId": "TaskService_GetTranscript",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1Transcript"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googleRpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "limit",
+            "description": "Most recent entries to return; 0 means 500.",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "TaskService"
+        ]
+      }
+    },
+    "/v1/tasks/{id}:finish": {
+      "post": {
+        "summary": "FinishTask marks a task done and ends its session. Messaging a done\ntask reopens it with the same conversation.",
+        "operationId": "TaskService_FinishTask",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1Task"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googleRpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/TaskServiceFinishTaskBody"
+            }
           }
         ],
         "tags": [
@@ -695,6 +811,9 @@
       },
       "description": "ClaudeHookRequest mirrors the Claude Code hook input fields aejar uses.\nUnknown fields are discarded by the gateway."
     },
+    "TaskServiceFinishTaskBody": {
+      "type": "object"
+    },
     "TaskServicePauseTaskBody": {
       "type": "object"
     },
@@ -920,6 +1039,10 @@
         },
         "docFolder": {
           "type": "string"
+        },
+        "model": {
+          "type": "string",
+          "description": "sonnet, opus or haiku; empty uses the profile default (opus for\nproject, sonnet otherwise)."
         }
       }
     },
@@ -1019,6 +1142,18 @@
         }
       }
     },
+    "v1SessionScreen": {
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string"
+        },
+        "live": {
+          "type": "boolean",
+          "description": "False when the task has no running session."
+        }
+      }
+    },
     "v1Task": {
       "type": "object",
       "properties": {
@@ -1070,6 +1205,10 @@
         "docFolder": {
           "type": "string",
           "description": "Coherence folder holding this task's docs."
+        },
+        "model": {
+          "type": "string",
+          "description": "Model alias for the session (sonnet, opus, haiku); empty uses the\nprofile default."
         }
       }
     },
@@ -1121,6 +1260,46 @@
             "type": "object",
             "$ref": "#/definitions/v1Approval"
           }
+        }
+      }
+    },
+    "v1Transcript": {
+      "type": "object",
+      "properties": {
+        "entries": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1TranscriptEntry"
+          }
+        },
+        "truncated": {
+          "type": "boolean",
+          "description": "True when older entries were left out."
+        }
+      }
+    },
+    "v1TranscriptEntry": {
+      "type": "object",
+      "properties": {
+        "ts": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "role": {
+          "type": "string",
+          "title": "user, assistant"
+        },
+        "kind": {
+          "type": "string",
+          "title": "text, tool_use, tool_result"
+        },
+        "text": {
+          "type": "string"
+        },
+        "tool": {
+          "type": "string",
+          "description": "For tool_use: the tool's name."
         }
       }
     },

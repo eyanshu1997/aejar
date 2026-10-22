@@ -90,6 +90,9 @@ message Task {
   google.protobuf.Timestamp updated_at = 12;
   // Coherence folder holding this task's docs.
   string doc_folder = 13;
+  // Model alias for the session (sonnet, opus, haiku); empty uses the
+  // profile default.
+  string model = 14;
 }
 
 message Approval {

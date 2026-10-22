@@ -17,14 +17,14 @@ import (
 )
 
 const taskColumns = `id, title, prompt, class, state, user_bump, wake_boost, wait_reason, profile,
-	claude_session_id, doc_folder, created_at, updated_at`
+	claude_session_id, doc_folder, created_at, updated_at, model`
 
 func (s *Server) scanTask(row interface{ Scan(...any) error }) (*aejarv1.Task, error) {
 	var t aejarv1.Task
 	var class, state, wake int32
 	var created, updated int64
 	err := row.Scan(&t.Id, &t.Title, &t.Prompt, &class, &state, &t.UserBump, &wake, &t.WaitReason, &t.Profile,
-		&t.ClaudeSessionId, &t.DocFolder, &created, &updated)
+		&t.ClaudeSessionId, &t.DocFolder, &created, &updated, &t.Model)
 	if err != nil {
 		return nil, err
 	}
@@ -61,15 +61,18 @@ func (s *Server) CreateTask(ctx context.Context, req *aejarv1.CreateTaskRequest)
 	if _, ok := policy.Profiles[profile]; !ok {
 		return nil, status.Errorf(codes.InvalidArgument, "unknown profile %q", profile)
 	}
+	if req.Model != "" && !policy.Models[req.Model] {
+		return nil, status.Errorf(codes.InvalidArgument, "unknown model %q (sonnet, opus or haiku)", req.Model)
+	}
 	id := newID("t")
 	now := s.Now().UnixNano()
-	_, err := s.DB.ExecContext(ctx, `INSERT INTO tasks (id, title, prompt, class, state, profile, doc_folder, created_at, updated_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`, id, title, req.Prompt, class, aejarv1.TaskState_TASK_STATE_QUEUED,
-		profile, req.DocFolder, now, now)
+	_, err := s.DB.ExecContext(ctx, `INSERT INTO tasks (id, title, prompt, class, state, profile, doc_folder, model, created_at, updated_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, id, title, req.Prompt, class, aejarv1.TaskState_TASK_STATE_QUEUED,
+		profile, req.DocFolder, req.Model, now, now)
 	if err != nil {
 		return nil, err
 	}
-	s.audit(ctx, auth.From(ctx).Name, "task.created", id, map[string]any{"title": title, "class": class.String(), "profile": profile})
+	s.audit(ctx, auth.From(ctx).Name, "task.created", id, map[string]any{"title": title, "class": class.String(), "profile": profile, "model": req.Model})
 	s.Kick()
 	return s.loadTask(ctx, id)
 }
@@ -152,6 +155,28 @@ func (s *Server) ResumeTask(ctx context.Context, req *aejarv1.ResumeTaskRequest)
 	s.audit(ctx, auth.From(ctx).Name, "task.resumed", req.Id, nil)
 	s.Kick()
 	return s.loadTask(ctx, req.Id)
+}
+
+func (s *Server) FinishTask(ctx context.Context, req *aejarv1.FinishTaskRequest) (*aejarv1.Task, error) {
+	t, err := s.loadTask(ctx, req.Id)
+	if err != nil {
+		return nil, err
+	}
+	switch t.State {
+	case aejarv1.TaskState_TASK_STATE_DONE:
+	case aejarv1.TaskState_TASK_STATE_RUNNING:
+		if err := s.stopTask(ctx, t.Id, aejarv1.TaskState_TASK_STATE_DONE, "", "finished by the owner"); err != nil {
+			return nil, err
+		}
+	default:
+		if _, err := s.DB.ExecContext(ctx, `UPDATE tasks SET state = ?, updated_at = ? WHERE id = ?`,
+			aejarv1.TaskState_TASK_STATE_DONE, s.Now().UnixNano(), t.Id); err != nil {
+			return nil, err
+		}
+		s.audit(ctx, auth.From(ctx).Name, "task.finished", t.Id, nil)
+	}
+	s.Kick()
+	return s.loadTask(ctx, t.Id)
 }
 
 func (s *Server) SummarizeTask(ctx context.Context, req *aejarv1.SummarizeTaskRequest) (*aejarv1.TaskSummary, error) {

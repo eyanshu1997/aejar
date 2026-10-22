@@ -42,18 +42,43 @@ services:
       - ${AEJAR_DATA}/config/emails.txt:/etc/oauth2-proxy/emails.txt:ro
     networks: [edge]
 
+  # One-shot: give coherence's user (uid 1600 in its image) its volume. The
+  # data dir is created 0700 for the aejar user, which under rootless Docker
+  # is container root, not uid 1600.
+  coherence-init:
+    image: aejar-coherence:${AEJAR_VERSION:-latest}
+    user: "0:0"
+    # coherence also needs its doc dir to exist (and a home index, or "/" is
+    # a 404 on a fresh install).
+    entrypoint: ["sh", "-c", "mkdir -p /data/.coherence/data && HOME=/data /opt/coherence/bin/coherence-doc reindex && chown -R 1600:1600 /data && chmod 700 /data"]
+    volumes:
+      - ${AEJAR_DATA}/coherence:/data
+    network_mode: none
+    restart: "no"
+
   coherence:
+    image: aejar-coherence:${AEJAR_VERSION:-latest}
     build: { context: .., dockerfile: images/coherence/Dockerfile }
     restart: unless-stopped
+    # COHERENCE_API_KEY: sessions write docs with it (coherence-doc remote mode).
+    env_file: ${AEJAR_DATA}/secrets/coherence.env
     environment:
       DOC_HOST: ${DOCS_HOST}
+      # Browser identity: nginx sets X-Remote-User from the Google login and
+      # overwrites any client copy. Only the owner's accounts may write.
+      REMOTE_USER_HEADER: X-Remote-User
+      REMOTE_USER_HEADER_TRUSTED: "true"
+      ALLOWED_USERS: ${OWNER_EMAILS}
       DOC_PORT: "443"
       DOC_SCHEME: https
     volumes:
       - ${AEJAR_DATA}/coherence:/data
+    depends_on:
+      coherence-init: { condition: service_completed_successfully }
     networks: [edge, sessions]
 
   aejard:
+    image: aejar-aejard:${AEJAR_VERSION:-latest}
     build: { context: .., dockerfile: images/aejard/Dockerfile }
     restart: unless-stopped
     command:
@@ -69,31 +94,60 @@ services:
     volumes:
       - ${AEJAR_DATA}/db:/data
       - ${AEJAR_DATA}/secrets/spawner_token:/data/secrets/spawner_token:ro
-      - ${AEJAR_DATA}/sessions:/sessions
+      - ${AEJAR_SESSIONS:-${AEJAR_DATA}/sessions}:/sessions
     networks: [edge, core, sessions]
 
   spawner:
+    image: aejar-spawner:${AEJAR_VERSION:-latest}
     build: { context: .., dockerfile: images/spawner/Dockerfile }
     restart: unless-stopped
     command:
       - -listen=:9200
       - -token-file=/secrets/spawner_token
       - -claude-token-file=/secrets/claude_oauth_token
-      - -image=aejar-session:latest
+      - -image=aejar-session:${AEJAR_VERSION:-latest}
       - -sessions=/sessions
-      - -host-sessions=${AEJAR_DATA}/sessions
+      - -host-sessions=${AEJAR_SESSIONS:-${AEJAR_DATA}/sessions}
       - -network=aejar_sessions
+      - -coherence-key-file=/secrets/coherence_api_key
+      - -context=/context
     environment:
       DOCKER_HOST: unix:///docker.sock
     volumes:
       - ${DOCKER_SOCK}:/docker.sock
-      - ${AEJAR_DATA}/sessions:/sessions
+      - ${AEJAR_SESSIONS:-${AEJAR_DATA}/sessions}:/sessions
       - ${AEJAR_DATA}/secrets/spawner_token:/secrets/spawner_token:ro
       - ${AEJAR_DATA}/secrets/claude_oauth_token:/secrets/claude_oauth_token:ro
+      - ${AEJAR_DATA}/secrets/coherence_api_key:/secrets/coherence_api_key:ro
+      # Owner-provided design docs, copied read-only into every session.
+      - ${AEJAR_DATA}/context:/context:ro
+    networks: [core]
+
+  # Discord bot. Off until the Discord ids are set: add COMPOSE_PROFILES=discord
+  # and the DISCORD_* values to aejar.env.
+  discord:
+    image: aejar-aejard:${AEJAR_VERSION:-latest}
+    profiles: [discord]
+    restart: unless-stopped
+    entrypoint: ["/usr/local/bin/aejar-discord"]
+    command:
+      - -token-file=/secrets/discord_bot_token
+      - -owner-token-file=/owner.token
+      - -aejard=aejard:9111
+      - -guild=${DISCORD_GUILD_ID:-}
+      - -channel=${DISCORD_CHANNEL_ID:-}
+      - -owner=${DISCORD_OWNER_ID:-}
+      - -public-url=https://${AEJAR_HOST}
+      - -state=/state/discord.json
+    volumes:
+      - ${AEJAR_DATA}/secrets/discord_bot_token:/secrets/discord_bot_token:ro
+      - ${AEJAR_DATA}/db/owner.token:/owner.token:ro
+      - ${AEJAR_DATA}/discord:/state
+    depends_on: [aejard]
     networks: [core]
 
   # Built here, started only by the spawner.
   session-image:
-    image: aejar-session:latest
+    image: aejar-session:${AEJAR_VERSION:-latest}
     build: { context: .., dockerfile: images/session/Dockerfile }
     profiles: [build-only]

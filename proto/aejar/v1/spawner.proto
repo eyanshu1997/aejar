@@ -14,6 +14,18 @@ service SpawnerService {
   // SendKeys is the fallback input path when the channel is unavailable.
   rpc SendKeys(SendKeysRequest) returns (SendKeysResponse);
   rpc ListSessions(ListSessionsRequest) returns (ListSessionsResponse);
+  // CaptureScreen returns the session terminal's current text (read-only).
+  rpc CaptureScreen(CaptureScreenRequest) returns (CaptureScreenResponse);
+}
+
+message CaptureScreenRequest {
+  string task_id = 1;
+  // Scrollback lines to include above the visible screen.
+  int32 history_lines = 2;
+}
+
+message CaptureScreenResponse {
+  string text = 1;
 }
 
 message StartSessionRequest {
@@ -23,6 +35,8 @@ message StartSessionRequest {
   // Set to resume a conversation (claude --resume).
   string claude_session_id = 4;
   string session_token = 5;
+  // Model alias; empty uses the profile default.
+  string model = 6;
 }
 
 message StartSessionResponse {

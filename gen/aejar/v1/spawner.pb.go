@@ -21,6 +21,103 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type CaptureScreenRequest struct {
+	state  protoimpl.MessageState `protogen:"open.v1"`
+	TaskId string                 `protobuf:"bytes,1,opt,name=task_id,json=taskId,proto3" json:"task_id,omitempty"`
+	// Scrollback lines to include above the visible screen.
+	HistoryLines  int32 `protobuf:"varint,2,opt,name=history_lines,json=historyLines,proto3" json:"history_lines,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CaptureScreenRequest) Reset() {
+	*x = CaptureScreenRequest{}
+	mi := &file_aejar_v1_spawner_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CaptureScreenRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CaptureScreenRequest) ProtoMessage() {}
+
+func (x *CaptureScreenRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_aejar_v1_spawner_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CaptureScreenRequest.ProtoReflect.Descriptor instead.
+func (*CaptureScreenRequest) Descriptor() ([]byte, []int) {
+	return file_aejar_v1_spawner_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *CaptureScreenRequest) GetTaskId() string {
+	if x != nil {
+		return x.TaskId
+	}
+	return ""
+}
+
+func (x *CaptureScreenRequest) GetHistoryLines() int32 {
+	if x != nil {
+		return x.HistoryLines
+	}
+	return 0
+}
+
+type CaptureScreenResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Text          string                 `protobuf:"bytes,1,opt,name=text,proto3" json:"text,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CaptureScreenResponse) Reset() {
+	*x = CaptureScreenResponse{}
+	mi := &file_aejar_v1_spawner_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CaptureScreenResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CaptureScreenResponse) ProtoMessage() {}
+
+func (x *CaptureScreenResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_aejar_v1_spawner_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CaptureScreenResponse.ProtoReflect.Descriptor instead.
+func (*CaptureScreenResponse) Descriptor() ([]byte, []int) {
+	return file_aejar_v1_spawner_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *CaptureScreenResponse) GetText() string {
+	if x != nil {
+		return x.Text
+	}
+	return ""
+}
+
 type StartSessionRequest struct {
 	state   protoimpl.MessageState `protogen:"open.v1"`
 	TaskId  string                 `protobuf:"bytes,1,opt,name=task_id,json=taskId,proto3" json:"task_id,omitempty"`
@@ -29,13 +126,15 @@ type StartSessionRequest struct {
 	// Set to resume a conversation (claude --resume).
 	ClaudeSessionId string `protobuf:"bytes,4,opt,name=claude_session_id,json=claudeSessionId,proto3" json:"claude_session_id,omitempty"`
 	SessionToken    string `protobuf:"bytes,5,opt,name=session_token,json=sessionToken,proto3" json:"session_token,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	// Model alias; empty uses the profile default.
+	Model         string `protobuf:"bytes,6,opt,name=model,proto3" json:"model,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *StartSessionRequest) Reset() {
 	*x = StartSessionRequest{}
-	mi := &file_aejar_v1_spawner_proto_msgTypes[0]
+	mi := &file_aejar_v1_spawner_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -47,7 +146,7 @@ func (x *StartSessionRequest) String() string {
 func (*StartSessionRequest) ProtoMessage() {}
 
 func (x *StartSessionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_aejar_v1_spawner_proto_msgTypes[0]
+	mi := &file_aejar_v1_spawner_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -60,7 +159,7 @@ func (x *StartSessionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StartSessionRequest.ProtoReflect.Descriptor instead.
 func (*StartSessionRequest) Descriptor() ([]byte, []int) {
-	return file_aejar_v1_spawner_proto_rawDescGZIP(), []int{0}
+	return file_aejar_v1_spawner_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *StartSessionRequest) GetTaskId() string {
@@ -98,6 +197,13 @@ func (x *StartSessionRequest) GetSessionToken() string {
 	return ""
 }
 
+func (x *StartSessionRequest) GetModel() string {
+	if x != nil {
+		return x.Model
+	}
+	return ""
+}
+
 type StartSessionResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Container     string                 `protobuf:"bytes,1,opt,name=container,proto3" json:"container,omitempty"`
@@ -107,7 +213,7 @@ type StartSessionResponse struct {
 
 func (x *StartSessionResponse) Reset() {
 	*x = StartSessionResponse{}
-	mi := &file_aejar_v1_spawner_proto_msgTypes[1]
+	mi := &file_aejar_v1_spawner_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -119,7 +225,7 @@ func (x *StartSessionResponse) String() string {
 func (*StartSessionResponse) ProtoMessage() {}
 
 func (x *StartSessionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_aejar_v1_spawner_proto_msgTypes[1]
+	mi := &file_aejar_v1_spawner_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -132,7 +238,7 @@ func (x *StartSessionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StartSessionResponse.ProtoReflect.Descriptor instead.
 func (*StartSessionResponse) Descriptor() ([]byte, []int) {
-	return file_aejar_v1_spawner_proto_rawDescGZIP(), []int{1}
+	return file_aejar_v1_spawner_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *StartSessionResponse) GetContainer() string {
@@ -152,7 +258,7 @@ type StopSessionRequest struct {
 
 func (x *StopSessionRequest) Reset() {
 	*x = StopSessionRequest{}
-	mi := &file_aejar_v1_spawner_proto_msgTypes[2]
+	mi := &file_aejar_v1_spawner_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -164,7 +270,7 @@ func (x *StopSessionRequest) String() string {
 func (*StopSessionRequest) ProtoMessage() {}
 
 func (x *StopSessionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_aejar_v1_spawner_proto_msgTypes[2]
+	mi := &file_aejar_v1_spawner_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -177,7 +283,7 @@ func (x *StopSessionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StopSessionRequest.ProtoReflect.Descriptor instead.
 func (*StopSessionRequest) Descriptor() ([]byte, []int) {
-	return file_aejar_v1_spawner_proto_rawDescGZIP(), []int{2}
+	return file_aejar_v1_spawner_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *StopSessionRequest) GetTaskId() string {
@@ -202,7 +308,7 @@ type StopSessionResponse struct {
 
 func (x *StopSessionResponse) Reset() {
 	*x = StopSessionResponse{}
-	mi := &file_aejar_v1_spawner_proto_msgTypes[3]
+	mi := &file_aejar_v1_spawner_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -214,7 +320,7 @@ func (x *StopSessionResponse) String() string {
 func (*StopSessionResponse) ProtoMessage() {}
 
 func (x *StopSessionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_aejar_v1_spawner_proto_msgTypes[3]
+	mi := &file_aejar_v1_spawner_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -227,7 +333,7 @@ func (x *StopSessionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StopSessionResponse.ProtoReflect.Descriptor instead.
 func (*StopSessionResponse) Descriptor() ([]byte, []int) {
-	return file_aejar_v1_spawner_proto_rawDescGZIP(), []int{3}
+	return file_aejar_v1_spawner_proto_rawDescGZIP(), []int{5}
 }
 
 type SendKeysRequest struct {
@@ -240,7 +346,7 @@ type SendKeysRequest struct {
 
 func (x *SendKeysRequest) Reset() {
 	*x = SendKeysRequest{}
-	mi := &file_aejar_v1_spawner_proto_msgTypes[4]
+	mi := &file_aejar_v1_spawner_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -252,7 +358,7 @@ func (x *SendKeysRequest) String() string {
 func (*SendKeysRequest) ProtoMessage() {}
 
 func (x *SendKeysRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_aejar_v1_spawner_proto_msgTypes[4]
+	mi := &file_aejar_v1_spawner_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -265,7 +371,7 @@ func (x *SendKeysRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SendKeysRequest.ProtoReflect.Descriptor instead.
 func (*SendKeysRequest) Descriptor() ([]byte, []int) {
-	return file_aejar_v1_spawner_proto_rawDescGZIP(), []int{4}
+	return file_aejar_v1_spawner_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *SendKeysRequest) GetTaskId() string {
@@ -290,7 +396,7 @@ type SendKeysResponse struct {
 
 func (x *SendKeysResponse) Reset() {
 	*x = SendKeysResponse{}
-	mi := &file_aejar_v1_spawner_proto_msgTypes[5]
+	mi := &file_aejar_v1_spawner_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -302,7 +408,7 @@ func (x *SendKeysResponse) String() string {
 func (*SendKeysResponse) ProtoMessage() {}
 
 func (x *SendKeysResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_aejar_v1_spawner_proto_msgTypes[5]
+	mi := &file_aejar_v1_spawner_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -315,7 +421,7 @@ func (x *SendKeysResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SendKeysResponse.ProtoReflect.Descriptor instead.
 func (*SendKeysResponse) Descriptor() ([]byte, []int) {
-	return file_aejar_v1_spawner_proto_rawDescGZIP(), []int{5}
+	return file_aejar_v1_spawner_proto_rawDescGZIP(), []int{7}
 }
 
 type ListSessionsRequest struct {
@@ -326,7 +432,7 @@ type ListSessionsRequest struct {
 
 func (x *ListSessionsRequest) Reset() {
 	*x = ListSessionsRequest{}
-	mi := &file_aejar_v1_spawner_proto_msgTypes[6]
+	mi := &file_aejar_v1_spawner_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -338,7 +444,7 @@ func (x *ListSessionsRequest) String() string {
 func (*ListSessionsRequest) ProtoMessage() {}
 
 func (x *ListSessionsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_aejar_v1_spawner_proto_msgTypes[6]
+	mi := &file_aejar_v1_spawner_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -351,7 +457,7 @@ func (x *ListSessionsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListSessionsRequest.ProtoReflect.Descriptor instead.
 func (*ListSessionsRequest) Descriptor() ([]byte, []int) {
-	return file_aejar_v1_spawner_proto_rawDescGZIP(), []int{6}
+	return file_aejar_v1_spawner_proto_rawDescGZIP(), []int{8}
 }
 
 type ListSessionsResponse struct {
@@ -363,7 +469,7 @@ type ListSessionsResponse struct {
 
 func (x *ListSessionsResponse) Reset() {
 	*x = ListSessionsResponse{}
-	mi := &file_aejar_v1_spawner_proto_msgTypes[7]
+	mi := &file_aejar_v1_spawner_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -375,7 +481,7 @@ func (x *ListSessionsResponse) String() string {
 func (*ListSessionsResponse) ProtoMessage() {}
 
 func (x *ListSessionsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_aejar_v1_spawner_proto_msgTypes[7]
+	mi := &file_aejar_v1_spawner_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -388,7 +494,7 @@ func (x *ListSessionsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListSessionsResponse.ProtoReflect.Descriptor instead.
 func (*ListSessionsResponse) Descriptor() ([]byte, []int) {
-	return file_aejar_v1_spawner_proto_rawDescGZIP(), []int{7}
+	return file_aejar_v1_spawner_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *ListSessionsResponse) GetSessions() []*SessionContainer {
@@ -410,7 +516,7 @@ type SessionContainer struct {
 
 func (x *SessionContainer) Reset() {
 	*x = SessionContainer{}
-	mi := &file_aejar_v1_spawner_proto_msgTypes[8]
+	mi := &file_aejar_v1_spawner_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -422,7 +528,7 @@ func (x *SessionContainer) String() string {
 func (*SessionContainer) ProtoMessage() {}
 
 func (x *SessionContainer) ProtoReflect() protoreflect.Message {
-	mi := &file_aejar_v1_spawner_proto_msgTypes[8]
+	mi := &file_aejar_v1_spawner_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -435,7 +541,7 @@ func (x *SessionContainer) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SessionContainer.ProtoReflect.Descriptor instead.
 func (*SessionContainer) Descriptor() ([]byte, []int) {
-	return file_aejar_v1_spawner_proto_rawDescGZIP(), []int{8}
+	return file_aejar_v1_spawner_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *SessionContainer) GetTaskId() string {
@@ -463,13 +569,19 @@ var File_aejar_v1_spawner_proto protoreflect.FileDescriptor
 
 const file_aejar_v1_spawner_proto_rawDesc = "" +
 	"\n" +
-	"\x16aejar/v1/spawner.proto\x12\baejar.v1\"\xb1\x01\n" +
+	"\x16aejar/v1/spawner.proto\x12\baejar.v1\"T\n" +
+	"\x14CaptureScreenRequest\x12\x17\n" +
+	"\atask_id\x18\x01 \x01(\tR\x06taskId\x12#\n" +
+	"\rhistory_lines\x18\x02 \x01(\x05R\fhistoryLines\"+\n" +
+	"\x15CaptureScreenResponse\x12\x12\n" +
+	"\x04text\x18\x01 \x01(\tR\x04text\"\xc7\x01\n" +
 	"\x13StartSessionRequest\x12\x17\n" +
 	"\atask_id\x18\x01 \x01(\tR\x06taskId\x12\x18\n" +
 	"\aprofile\x18\x02 \x01(\tR\aprofile\x12\x16\n" +
 	"\x06prompt\x18\x03 \x01(\tR\x06prompt\x12*\n" +
 	"\x11claude_session_id\x18\x04 \x01(\tR\x0fclaudeSessionId\x12#\n" +
-	"\rsession_token\x18\x05 \x01(\tR\fsessionToken\"4\n" +
+	"\rsession_token\x18\x05 \x01(\tR\fsessionToken\x12\x14\n" +
+	"\x05model\x18\x06 \x01(\tR\x05model\"4\n" +
 	"\x14StartSessionResponse\x12\x1c\n" +
 	"\tcontainer\x18\x01 \x01(\tR\tcontainer\"E\n" +
 	"\x12StopSessionRequest\x12\x17\n" +
@@ -486,12 +598,13 @@ const file_aejar_v1_spawner_proto_rawDesc = "" +
 	"\x10SessionContainer\x12\x17\n" +
 	"\atask_id\x18\x01 \x01(\tR\x06taskId\x12\x1c\n" +
 	"\tcontainer\x18\x02 \x01(\tR\tcontainer\x12\x14\n" +
-	"\x05state\x18\x03 \x01(\tR\x05state2\xbd\x02\n" +
+	"\x05state\x18\x03 \x01(\tR\x05state2\x8f\x03\n" +
 	"\x0eSpawnerService\x12M\n" +
 	"\fStartSession\x12\x1d.aejar.v1.StartSessionRequest\x1a\x1e.aejar.v1.StartSessionResponse\x12J\n" +
 	"\vStopSession\x12\x1c.aejar.v1.StopSessionRequest\x1a\x1d.aejar.v1.StopSessionResponse\x12A\n" +
 	"\bSendKeys\x12\x19.aejar.v1.SendKeysRequest\x1a\x1a.aejar.v1.SendKeysResponse\x12M\n" +
-	"\fListSessions\x12\x1d.aejar.v1.ListSessionsRequest\x1a\x1e.aejar.v1.ListSessionsResponseB3Z1github.com/eyanshu1997/aejar/gen/aejar/v1;aejarv1b\x06proto3"
+	"\fListSessions\x12\x1d.aejar.v1.ListSessionsRequest\x1a\x1e.aejar.v1.ListSessionsResponse\x12P\n" +
+	"\rCaptureScreen\x12\x1e.aejar.v1.CaptureScreenRequest\x1a\x1f.aejar.v1.CaptureScreenResponseB3Z1github.com/eyanshu1997/aejar/gen/aejar/v1;aejarv1b\x06proto3"
 
 var (
 	file_aejar_v1_spawner_proto_rawDescOnce sync.Once
@@ -505,33 +618,37 @@ func file_aejar_v1_spawner_proto_rawDescGZIP() []byte {
 	return file_aejar_v1_spawner_proto_rawDescData
 }
 
-var file_aejar_v1_spawner_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
+var file_aejar_v1_spawner_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
 var file_aejar_v1_spawner_proto_goTypes = []any{
-	(*StartSessionRequest)(nil),  // 0: aejar.v1.StartSessionRequest
-	(*StartSessionResponse)(nil), // 1: aejar.v1.StartSessionResponse
-	(*StopSessionRequest)(nil),   // 2: aejar.v1.StopSessionRequest
-	(*StopSessionResponse)(nil),  // 3: aejar.v1.StopSessionResponse
-	(*SendKeysRequest)(nil),      // 4: aejar.v1.SendKeysRequest
-	(*SendKeysResponse)(nil),     // 5: aejar.v1.SendKeysResponse
-	(*ListSessionsRequest)(nil),  // 6: aejar.v1.ListSessionsRequest
-	(*ListSessionsResponse)(nil), // 7: aejar.v1.ListSessionsResponse
-	(*SessionContainer)(nil),     // 8: aejar.v1.SessionContainer
+	(*CaptureScreenRequest)(nil),  // 0: aejar.v1.CaptureScreenRequest
+	(*CaptureScreenResponse)(nil), // 1: aejar.v1.CaptureScreenResponse
+	(*StartSessionRequest)(nil),   // 2: aejar.v1.StartSessionRequest
+	(*StartSessionResponse)(nil),  // 3: aejar.v1.StartSessionResponse
+	(*StopSessionRequest)(nil),    // 4: aejar.v1.StopSessionRequest
+	(*StopSessionResponse)(nil),   // 5: aejar.v1.StopSessionResponse
+	(*SendKeysRequest)(nil),       // 6: aejar.v1.SendKeysRequest
+	(*SendKeysResponse)(nil),      // 7: aejar.v1.SendKeysResponse
+	(*ListSessionsRequest)(nil),   // 8: aejar.v1.ListSessionsRequest
+	(*ListSessionsResponse)(nil),  // 9: aejar.v1.ListSessionsResponse
+	(*SessionContainer)(nil),      // 10: aejar.v1.SessionContainer
 }
 var file_aejar_v1_spawner_proto_depIdxs = []int32{
-	8, // 0: aejar.v1.ListSessionsResponse.sessions:type_name -> aejar.v1.SessionContainer
-	0, // 1: aejar.v1.SpawnerService.StartSession:input_type -> aejar.v1.StartSessionRequest
-	2, // 2: aejar.v1.SpawnerService.StopSession:input_type -> aejar.v1.StopSessionRequest
-	4, // 3: aejar.v1.SpawnerService.SendKeys:input_type -> aejar.v1.SendKeysRequest
-	6, // 4: aejar.v1.SpawnerService.ListSessions:input_type -> aejar.v1.ListSessionsRequest
-	1, // 5: aejar.v1.SpawnerService.StartSession:output_type -> aejar.v1.StartSessionResponse
-	3, // 6: aejar.v1.SpawnerService.StopSession:output_type -> aejar.v1.StopSessionResponse
-	5, // 7: aejar.v1.SpawnerService.SendKeys:output_type -> aejar.v1.SendKeysResponse
-	7, // 8: aejar.v1.SpawnerService.ListSessions:output_type -> aejar.v1.ListSessionsResponse
-	5, // [5:9] is the sub-list for method output_type
-	1, // [1:5] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	10, // 0: aejar.v1.ListSessionsResponse.sessions:type_name -> aejar.v1.SessionContainer
+	2,  // 1: aejar.v1.SpawnerService.StartSession:input_type -> aejar.v1.StartSessionRequest
+	4,  // 2: aejar.v1.SpawnerService.StopSession:input_type -> aejar.v1.StopSessionRequest
+	6,  // 3: aejar.v1.SpawnerService.SendKeys:input_type -> aejar.v1.SendKeysRequest
+	8,  // 4: aejar.v1.SpawnerService.ListSessions:input_type -> aejar.v1.ListSessionsRequest
+	0,  // 5: aejar.v1.SpawnerService.CaptureScreen:input_type -> aejar.v1.CaptureScreenRequest
+	3,  // 6: aejar.v1.SpawnerService.StartSession:output_type -> aejar.v1.StartSessionResponse
+	5,  // 7: aejar.v1.SpawnerService.StopSession:output_type -> aejar.v1.StopSessionResponse
+	7,  // 8: aejar.v1.SpawnerService.SendKeys:output_type -> aejar.v1.SendKeysResponse
+	9,  // 9: aejar.v1.SpawnerService.ListSessions:output_type -> aejar.v1.ListSessionsResponse
+	1,  // 10: aejar.v1.SpawnerService.CaptureScreen:output_type -> aejar.v1.CaptureScreenResponse
+	6,  // [6:11] is the sub-list for method output_type
+	1,  // [1:6] is the sub-list for method input_type
+	1,  // [1:1] is the sub-list for extension type_name
+	1,  // [1:1] is the sub-list for extension extendee
+	0,  // [0:1] is the sub-list for field type_name
 }
 
 func init() { file_aejar_v1_spawner_proto_init() }
@@ -545,7 +662,7 @@ func file_aejar_v1_spawner_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_aejar_v1_spawner_proto_rawDesc), len(file_aejar_v1_spawner_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   9,
+			NumMessages:   11,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

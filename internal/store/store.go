@@ -98,6 +98,12 @@ var migrations = []string{
 	// Whether Claude Code registered the session's channel: '' (not known
 	// yet), 'ready', or 'unavailable' (events are typed instead).
 	`ALTER TABLE sessions ADD COLUMN channel TEXT NOT NULL DEFAULT '';`,
+	// Finishing: when the session went idle (0 = busy), whether it asked to
+	// be marked complete, and the last terminal screen for history.
+	`ALTER TABLE tasks ADD COLUMN idle_since INTEGER NOT NULL DEFAULT 0;
+	ALTER TABLE tasks ADD COLUMN complete_requested INTEGER NOT NULL DEFAULT 0;
+	ALTER TABLE tasks ADD COLUMN last_screen TEXT NOT NULL DEFAULT '';`,
+	`ALTER TABLE tasks ADD COLUMN model TEXT NOT NULL DEFAULT '';`,
 }
 
 // Open opens (creating if needed) the database at path and applies
