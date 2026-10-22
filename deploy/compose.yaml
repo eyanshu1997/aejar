@@ -43,6 +43,7 @@ services:
     networks: [edge]
 
   coherence:
+    image: aejar-coherence:${AEJAR_VERSION:-latest}
     build: { context: .., dockerfile: images/coherence/Dockerfile }
     restart: unless-stopped
     environment:
@@ -54,6 +55,7 @@ services:
     networks: [edge, sessions]
 
   aejard:
+    image: aejar-aejard:${AEJAR_VERSION:-latest}
     build: { context: .., dockerfile: images/aejard/Dockerfile }
     restart: unless-stopped
     command:
@@ -73,13 +75,14 @@ services:
     networks: [edge, core, sessions]
 
   spawner:
+    image: aejar-spawner:${AEJAR_VERSION:-latest}
     build: { context: .., dockerfile: images/spawner/Dockerfile }
     restart: unless-stopped
     command:
       - -listen=:9200
       - -token-file=/secrets/spawner_token
       - -claude-token-file=/secrets/claude_oauth_token
-      - -image=aejar-session:latest
+      - -image=aejar-session:${AEJAR_VERSION:-latest}
       - -sessions=/sessions
       - -host-sessions=${AEJAR_DATA}/sessions
       - -network=aejar_sessions
@@ -94,6 +97,6 @@ services:
 
   # Built here, started only by the spawner.
   session-image:
-    image: aejar-session:latest
+    image: aejar-session:${AEJAR_VERSION:-latest}
     build: { context: .., dockerfile: images/session/Dockerfile }
     profiles: [build-only]
