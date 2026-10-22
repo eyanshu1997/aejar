@@ -60,8 +60,15 @@ services:
     image: aejar-coherence:${AEJAR_VERSION:-latest}
     build: { context: .., dockerfile: images/coherence/Dockerfile }
     restart: unless-stopped
+    # COHERENCE_API_KEY: sessions write docs with it (coherence-doc remote mode).
+    env_file: ${AEJAR_DATA}/secrets/coherence.env
     environment:
       DOC_HOST: ${DOCS_HOST}
+      # Browser identity: nginx sets X-Remote-User from the Google login and
+      # overwrites any client copy. Only the owner's accounts may write.
+      REMOTE_USER_HEADER: X-Remote-User
+      REMOTE_USER_HEADER_TRUSTED: "true"
+      ALLOWED_USERS: ${OWNER_EMAILS}
       DOC_PORT: "443"
       DOC_SCHEME: https
     volumes:
@@ -102,6 +109,8 @@ services:
       - -sessions=/sessions
       - -host-sessions=${AEJAR_SESSIONS:-${AEJAR_DATA}/sessions}
       - -network=aejar_sessions
+      - -coherence-key-file=/secrets/coherence_api_key
+      - -context=/context
     environment:
       DOCKER_HOST: unix:///docker.sock
     volumes:
@@ -109,6 +118,9 @@ services:
       - ${AEJAR_SESSIONS:-${AEJAR_DATA}/sessions}:/sessions
       - ${AEJAR_DATA}/secrets/spawner_token:/secrets/spawner_token:ro
       - ${AEJAR_DATA}/secrets/claude_oauth_token:/secrets/claude_oauth_token:ro
+      - ${AEJAR_DATA}/secrets/coherence_api_key:/secrets/coherence_api_key:ro
+      # Owner-provided design docs, copied read-only into every session.
+      - ${AEJAR_DATA}/context:/context:ro
     networks: [core]
 
   # Discord bot. Off until the Discord ids are set: add COMPOSE_PROFILES=discord

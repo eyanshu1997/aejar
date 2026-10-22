@@ -46,6 +46,9 @@ type Config struct {
 	CoherenceKey   string
 	DockerBinary   string
 	StopTimeoutSec int
+	// ContextDir holds owner-provided reference files (design docs) that
+	// every session gets a read-only copy of in /work/context.
+	ContextDir string
 }
 
 // Exec runs the docker CLI; tests replace it.
@@ -178,6 +181,9 @@ func Prepare(cfg Config, req *aejarv1.StartSessionRequest, chown func(string, in
 			return err
 		}
 	}
+	if err := copyContext(cfg.ContextDir, filepath.Join(root, "work", "context")); err != nil {
+		return err
+	}
 	// A stale socket from a previous run would make the channel server fail.
 	os.Remove(filepath.Join(root, "run", "channel.sock"))
 	for _, d := range []string{"work", "home", "run"} {
@@ -187,6 +193,38 @@ func Prepare(cfg Config, req *aejarv1.StartSessionRequest, chown func(string, in
 			}
 			return chown(p, AgentUID, AgentUID)
 		}); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// copyContext refreshes dst with the regular files directly in src. Symlinks,
+// directories and other special files are skipped. The copies are read-only.
+func copyContext(src, dst string) error {
+	if src == "" {
+		return nil
+	}
+	entries, err := os.ReadDir(src)
+	if errors.Is(err, os.ErrNotExist) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	os.RemoveAll(dst)
+	if err := os.MkdirAll(dst, 0o755); err != nil {
+		return err
+	}
+	for _, e := range entries {
+		if !e.Type().IsRegular() {
+			continue
+		}
+		b, err := os.ReadFile(filepath.Join(src, e.Name()))
+		if err != nil {
+			return err
+		}
+		if err := os.WriteFile(filepath.Join(dst, e.Name()), b, 0o444); err != nil {
 			return err
 		}
 	}

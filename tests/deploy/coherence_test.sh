@@ -19,6 +19,7 @@ trap cleanup EXIT
 mkdir -p "$data/coherence" "$data/secrets"
 chmod 700 "$data/coherence"
 : > "$data/secrets/oauth2-proxy.env"
+echo "COHERENCE_API_KEY=fake-test-key" > "$data/secrets/coherence.env"
 cat > "$data/env" <<ENV
 AEJAR_DATA=$data
 DOCKER_SOCK=/var/run/docker.sock

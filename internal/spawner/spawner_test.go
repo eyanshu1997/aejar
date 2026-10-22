@@ -216,3 +216,23 @@ func TestStartWaitsForOldContainerRemoval(t *testing.T) {
 		t.Fatalf("ops %v, inspects %d", ops, inspects)
 	}
 }
+
+func TestContextFilesCopiedReadOnly(t *testing.T) {
+	cfg := testCfg(t)
+	cfg.ContextDir = t.TempDir()
+	os.WriteFile(filepath.Join(cfg.ContextDir, "PLAN.md"), []byte("the plan"), 0o600)
+	os.Symlink("/etc/passwd", filepath.Join(cfg.ContextDir, "passwd"))
+	if err := Prepare(cfg, req(), func(string, int, int) error { return nil }); err != nil {
+		t.Fatal(err)
+	}
+	dst := filepath.Join(cfg.LocalSessionsDir, "t-abcdefgh", "work", "context")
+	if b, err := os.ReadFile(filepath.Join(dst, "PLAN.md")); err != nil || string(b) != "the plan" {
+		t.Fatalf("plan not copied: %q %v", b, err)
+	}
+	if fi, _ := os.Stat(filepath.Join(dst, "PLAN.md")); fi.Mode().Perm()&0o222 != 0 {
+		t.Fatalf("context copy is writable: %v", fi.Mode())
+	}
+	if _, err := os.Lstat(filepath.Join(dst, "passwd")); err == nil {
+		t.Fatal("symlink followed into the session")
+	}
+}
