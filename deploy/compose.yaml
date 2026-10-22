@@ -71,7 +71,7 @@ services:
     volumes:
       - ${AEJAR_DATA}/db:/data
       - ${AEJAR_DATA}/secrets/spawner_token:/data/secrets/spawner_token:ro
-      - ${AEJAR_DATA}/sessions:/sessions
+      - ${AEJAR_SESSIONS:-${AEJAR_DATA}/sessions}:/sessions
     networks: [edge, core, sessions]
 
   spawner:
@@ -84,13 +84,13 @@ services:
       - -claude-token-file=/secrets/claude_oauth_token
       - -image=aejar-session:${AEJAR_VERSION:-latest}
       - -sessions=/sessions
-      - -host-sessions=${AEJAR_DATA}/sessions
+      - -host-sessions=${AEJAR_SESSIONS:-${AEJAR_DATA}/sessions}
       - -network=aejar_sessions
     environment:
       DOCKER_HOST: unix:///docker.sock
     volumes:
       - ${DOCKER_SOCK}:/docker.sock
-      - ${AEJAR_DATA}/sessions:/sessions
+      - ${AEJAR_SESSIONS:-${AEJAR_DATA}/sessions}:/sessions
       - ${AEJAR_DATA}/secrets/spawner_token:/secrets/spawner_token:ro
       - ${AEJAR_DATA}/secrets/claude_oauth_token:/secrets/claude_oauth_token:ro
     networks: [core]
