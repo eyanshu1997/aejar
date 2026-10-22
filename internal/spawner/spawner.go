@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"time"
 
 	aejarv1 "github.com/eyanshu1997/aejar/gen/aejar/v1"
 	"github.com/eyanshu1997/aejar/internal/policy"
@@ -195,6 +196,31 @@ type Spawner struct {
 	Cfg   Config
 	Exec  Exec
 	Chown func(string, int, int) error
+
+	pollInterval time.Duration
+}
+
+// waitGone waits until no container has this name. Containers run with
+// --rm, so after a stop docker may still be removing the old one.
+func (s *Spawner) waitGone(ctx context.Context, name string) error {
+	interval := s.pollInterval
+	if interval == 0 {
+		interval = 500 * time.Millisecond
+	}
+	deadline := time.Now().Add(60 * time.Second)
+	for {
+		if _, err := s.Exec(ctx, nil, "inspect", "--format", "{{.State.Status}}", name); err != nil {
+			return nil // no such container
+		}
+		if time.Now().After(deadline) {
+			return fmt.Errorf("container %s still exists after 60s", name)
+		}
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(interval):
+		}
+	}
 }
 
 func (s *Spawner) StartSession(ctx context.Context, req *aejarv1.StartSessionRequest) (*aejarv1.StartSessionResponse, error) {
@@ -204,8 +230,12 @@ func (s *Spawner) StartSession(ctx context.Context, req *aejarv1.StartSessionReq
 	if err := Prepare(s.Cfg, req, s.Chown); err != nil {
 		return nil, status.Errorf(codes.Internal, "prepare session: %v", err)
 	}
-	// A leftover container (crash, restart) is replaced.
+	// A leftover container (crash, restart) is replaced; wait until docker
+	// has finished removing it or the name is still taken.
 	s.Exec(ctx, nil, "rm", "-f", ContainerName(req.TaskId))
+	if err := s.waitGone(ctx, ContainerName(req.TaskId)); err != nil {
+		return nil, status.Errorf(codes.Unavailable, "start session: %v", err)
+	}
 	if _, err := s.Exec(ctx, secretEnv(s.Cfg, req), RunArgs(s.Cfg, req)...); err != nil {
 		return nil, status.Errorf(codes.Internal, "start session: %v", err)
 	}
@@ -254,4 +284,11 @@ func (s *Spawner) ListSessions(ctx context.Context, _ *aejarv1.ListSessionsReque
 		}
 	}
 	return resp, nil
+}
+
+// CleanToken removes all whitespace from a token secret. Tokens never contain
+// whitespace, but a value copied from a wrapped terminal line does, and Claude
+// Code rejects a header with a line break in it.
+func CleanToken(s string) string {
+	return strings.Join(strings.Fields(s), "")
 }

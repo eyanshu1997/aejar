@@ -52,6 +52,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	claude = spawner.CleanToken(claude)
 	var cohKey string
 	if *coherenceKey != "" {
 		if cohKey, err = readSecret(*coherenceKey); err != nil {

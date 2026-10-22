@@ -217,7 +217,22 @@ func (s *Server) startTask(ctx context.Context, id string) error {
 	if err := tx.Commit(); err != nil {
 		return err
 	}
-	return s.Runner.Start(ctx, spec)
+	if err := s.Runner.Start(ctx, spec); err != nil {
+		// Never leave a task "running" without a session: put it back in
+		// the queue and kill the token issued for the failed start.
+		log.Printf("start %s: %v", id, err)
+		now := s.Now().UnixNano()
+		if _, dbErr := s.DB.ExecContext(ctx, `UPDATE tasks SET state = ?, updated_at = ? WHERE id = ?`,
+			aejarv1.TaskState_TASK_STATE_QUEUED, now, id); dbErr != nil {
+			return dbErr
+		}
+		if _, dbErr := s.DB.ExecContext(ctx, `UPDATE sessions SET revoked_at = ? WHERE task_id = ? AND revoked_at IS NULL`,
+			now, id); dbErr != nil {
+			return dbErr
+		}
+		s.audit(ctx, "aejard", "task.start_failed", id, map[string]any{"error": err.Error()})
+	}
+	return nil
 }
 
 // stopTask stops a running task, revokes its session tokens and moves it to

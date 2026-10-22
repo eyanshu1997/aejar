@@ -186,3 +186,42 @@ func TestNoDeliveryBeforeChannelStatusKnown(t *testing.T) {
 		t.Fatal("not delivered once ready")
 	}
 }
+
+// Regression: when the runner failed to start a session, the task stayed
+// "running" with no container and never ran again.
+func TestFailedStartRequeues(t *testing.T) {
+	e := setup(t)
+	e.rec.SetStartErr(errors.New("docker: name conflict"))
+	id := e.must("POST", "/v1/tasks", e.owner, map[string]any{"title": "t"})["id"].(string)
+	e.tick()
+	if s := e.state(id); s != "TASK_STATE_QUEUED" {
+		t.Fatalf("state after failed start: %s", s)
+	}
+	var tokens int
+	e.db.QueryRow(`SELECT COUNT(*) FROM sessions WHERE task_id = ? AND revoked_at IS NULL`, id).Scan(&tokens)
+	if tokens != 0 {
+		t.Fatal("session token from the failed start is still valid")
+	}
+	e.rec.SetStartErr(nil)
+	e.tick()
+	if s := e.state(id); s != "TASK_STATE_RUNNING" {
+		t.Fatalf("not retried: %s", s)
+	}
+}
+
+func TestUIPageServedAndDataNeedsAuth(t *testing.T) {
+	e := setup(t)
+	resp, err := http.Get(e.url + "/")
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusOK || !strings.HasPrefix(resp.Header.Get("Content-Type"), "text/html") ||
+		!strings.Contains(resp.Header.Get("Content-Security-Policy"), "frame-ancestors 'none'") {
+		t.Fatalf("ui: %d %v", resp.StatusCode, resp.Header)
+	}
+	// The page carries no data; the API behind it still needs a login.
+	if code, _ := e.call("GET", "/v1/tasks", "", nil); code != http.StatusUnauthorized {
+		t.Fatalf("api without auth: %d", code)
+	}
+}

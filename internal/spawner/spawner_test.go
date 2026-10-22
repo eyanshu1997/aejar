@@ -2,11 +2,13 @@ package spawner
 
 import (
 	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
+	"time"
 
 	aejarv1 "github.com/eyanshu1997/aejar/gen/aejar/v1"
 )
@@ -99,15 +101,18 @@ func TestStartPreparesAndRuns(t *testing.T) {
 	s := &Spawner{Cfg: cfg, Chown: func(string, int, int) error { return nil },
 		Exec: func(_ context.Context, env []string, args ...string) ([]byte, error) {
 			calls, envs = append(calls, args), append(envs, env)
+			if args[0] == "inspect" {
+				return nil, errors.New("no such object")
+			}
 			return nil, nil
 		}}
 	if _, err := s.StartSession(context.Background(), req()); err != nil {
 		t.Fatal(err)
 	}
-	if calls[0][0] != "rm" || calls[1][0] != "run" {
+	if calls[0][0] != "rm" || calls[1][0] != "inspect" || calls[2][0] != "run" {
 		t.Fatalf("calls: %v", calls)
 	}
-	if !slices.Contains(envs[1], "CLAUDE_CODE_OAUTH_TOKEN=sk-ant-fake-claude-token") {
+	if !slices.Contains(envs[2], "CLAUDE_CODE_OAUTH_TOKEN=sk-ant-fake-claude-token") {
 		t.Fatal("claude token not passed via env")
 	}
 	root := filepath.Join(cfg.LocalSessionsDir, "t-abcdefgh")
@@ -172,5 +177,42 @@ func TestSessionUserCanReadConfig(t *testing.T) {
 		if strings.Contains(string(b), token) {
 			t.Errorf("%s contains the session token", f)
 		}
+	}
+}
+
+// Regression: the Claude token was pasted from a wrapped terminal line and
+// saved with a line break inside it; Claude Code rejected the header
+// ("contains a line break"). Token secrets never contain whitespace.
+func TestCleanTokenRemovesWrapping(t *testing.T) {
+	got := CleanToken("sk-ant-oat01-fakefirstpart\n  fakesecondpart \r\n")
+	if got != "sk-ant-oat01-fakefirstpartfakesecondpart" {
+		t.Fatalf("got %q", got)
+	}
+}
+
+// Regression: a quick pause/resume started the new container while docker was
+// still removing the old one (--rm), and `docker run` failed with a name
+// conflict. Start must wait until the old container is gone.
+func TestStartWaitsForOldContainerRemoval(t *testing.T) {
+	inspects := 0
+	var ops []string
+	s := &Spawner{Cfg: testCfg(t), Chown: func(string, int, int) error { return nil },
+		Exec: func(_ context.Context, _ []string, args ...string) ([]byte, error) {
+			ops = append(ops, args[0])
+			if args[0] == "inspect" {
+				inspects++
+				if inspects < 3 {
+					return []byte("running"), nil // still there
+				}
+				return []byte("Error: No such object"), errors.New("exit 1")
+			}
+			return nil, nil
+		}}
+	s.pollInterval = time.Millisecond
+	if _, err := s.StartSession(context.Background(), req()); err != nil {
+		t.Fatal(err)
+	}
+	if ops[len(ops)-1] != "run" || inspects != 3 {
+		t.Fatalf("ops %v, inspects %d", ops, inspects)
 	}
 }

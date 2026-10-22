@@ -54,11 +54,22 @@ type Recorder struct {
 	mu         sync.Mutex
 	calls      []Call
 	deliverErr error
+	startErr   error
+}
+
+// SetStartErr, when set, makes Start fail.
+func (r *Recorder) SetStartErr(err error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.startErr = err
 }
 
 func (r *Recorder) Start(_ context.Context, spec Spec) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+	if r.startErr != nil {
+		return r.startErr
+	}
 	r.calls = append(r.calls, Call{Op: "start", Spec: spec, TaskID: spec.TaskID})
 	return nil
 }
