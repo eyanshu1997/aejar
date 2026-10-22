@@ -42,6 +42,20 @@ services:
       - ${AEJAR_DATA}/config/emails.txt:/etc/oauth2-proxy/emails.txt:ro
     networks: [edge]
 
+  # One-shot: give coherence's user (uid 1600 in its image) its volume. The
+  # data dir is created 0700 for the aejar user, which under rootless Docker
+  # is container root, not uid 1600.
+  coherence-init:
+    image: aejar-coherence:${AEJAR_VERSION:-latest}
+    user: "0:0"
+    # coherence also needs its doc dir to exist (and a home index, or "/" is
+    # a 404 on a fresh install).
+    entrypoint: ["sh", "-c", "mkdir -p /data/.coherence/data && HOME=/data /opt/coherence/bin/coherence-doc reindex && chown -R 1600:1600 /data && chmod 700 /data"]
+    volumes:
+      - ${AEJAR_DATA}/coherence:/data
+    network_mode: none
+    restart: "no"
+
   coherence:
     image: aejar-coherence:${AEJAR_VERSION:-latest}
     build: { context: .., dockerfile: images/coherence/Dockerfile }
@@ -52,6 +66,8 @@ services:
       DOC_SCHEME: https
     volumes:
       - ${AEJAR_DATA}/coherence:/data
+    depends_on:
+      coherence-init: { condition: service_completed_successfully }
     networks: [edge, sessions]
 
   aejard:
