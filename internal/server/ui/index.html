@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>aejar</title>
+<style>
+  :root { --bg:#f7f7f5; --fg:#1d1d1b; --muted:#6b6b66; --card:#fff; --line:#e3e2dd; --accent:#2f5d50; --warn:#9a3b1e; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#151514; --fg:#ecebe6; --muted:#9a9993; --card:#1f1f1d; --line:#33322f; --accent:#7fb8a4; --warn:#e48a68; } }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  header { display:flex; gap:16px; align-items:baseline; flex-wrap:wrap; padding:16px; border-bottom:1px solid var(--line); }
+  header h1 { margin:0; font-size:20px; letter-spacing:.02em; }
+  #status { color:var(--muted); font-size:14px; }
+  main { max-width:1100px; margin:0 auto; padding:16px; display:grid; gap:20px; }
+  section { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:14px 16px; overflow-x:auto; }
+  h2 { font-size:15px; margin:0 0 10px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
+  table { width:100%; border-collapse:collapse; font-size:14px; }
+  th, td { text-align:left; padding:6px 8px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { color:var(--muted); font-weight:500; }
+  button { font:inherit; font-size:13px; padding:4px 10px; border-radius:6px; border:1px solid var(--line); background:var(--bg); color:var(--fg); cursor:pointer; }
+  button.primary { background:var(--accent); color:var(--card); border-color:var(--accent); }
+  button.danger { color:var(--warn); }
+  input, textarea, select { font:inherit; font-size:14px; padding:6px 8px; border:1px solid var(--line); border-radius:6px; background:var(--bg); color:var(--fg); width:100%; }
+  textarea { min-height:60px; }
+  form { display:grid; gap:8px; }
+  .row { display:flex; gap:8px; flex-wrap:wrap; }
+  .row > * { flex:1; min-width:120px; }
+  .approval { border:1px solid var(--line); border-radius:6px; padding:10px; margin-bottom:10px; }
+  pre { margin:8px 0; padding:8px; background:var(--bg); border-radius:6px; font-size:13px; white-space:pre-wrap; word-break:break-word; }
+  .muted { color:var(--muted); }
+  #err { color:var(--warn); }
+</style>
+</head>
+<body>
+<header><h1>aejar</h1><span id="status">loading…</span><span id="err"></span></header>
+<main>
+  <section><h2>Pending approvals</h2><div id="approvals" class="muted">none</div></section>
+  <section><h2>Tasks</h2>
+    <table><thead><tr><th>Task</th><th>State</th><th>Class</th><th>Score</th><th>Profile</th><th></th></tr></thead><tbody id="tasks"></tbody></table>
+  </section>
+  <section><h2>New task</h2>
+    <form id="newtask">
+      <input name="title" placeholder="Title" required>
+      <textarea name="prompt" placeholder="What should the session do?"></textarea>
+      <div class="row">
+        <select name="class"><option value="TASK_CLASS_P1">P1 normal</option><option value="TASK_CLASS_P0">P0 now</option><option value="TASK_CLASS_P2">P2 background</option><option value="TASK_CLASS_P3">P3 housekeeping</option></select>
+        <select name="profile"><option>plan</option><option>research</option><option>action</option><option>mail</option><option>project</option></select>
+        <button class="primary" type="submit">Create</button>
+      </div>
+    </form>
+  </section>
+  <section><h2>Message a task</h2>
+    <form id="say"><div class="row"><select name="id" id="sayTask"></select><input name="text" placeholder="Message for the session" required><button type="submit">Send</button></div></form>
+  </section>
+  <section><h2>Audit (latest)</h2>
+    <table><tbody id="audit"></tbody></table>
+  </section>
+</main>
+<script>
+const short = s => (s || '').replace(/^(TASK_STATE_|TASK_CLASS_|APPROVAL_CLASS_|APPROVAL_STATE_)/, '').toLowerCase();
+function el(tag, props = {}, ...kids) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(props)) { if (k === 'onclick') e.onclick = v; else e.setAttribute(k, v); }
+  for (const k of kids) e.append(k instanceof Node ? k : document.createTextNode(String(k ?? '')));
+  return e;
+}
+async function api(method, path, body) {
+  const r = await fetch(path, { method, headers: { 'content-type': 'application/json' }, body: body ? JSON.stringify(body) : undefined, credentials: 'same-origin' });
+  const t = await r.text(); const d = t ? JSON.parse(t) : {};
+  if (!r.ok) throw new Error(d.message || r.status);
+  return d;
+}
+function report(e) { document.getElementById('err').textContent = e ? String(e.message || e) : ''; }
+
+async function refresh() {
+  try {
+    const [st, tasks, appr, audit] = await Promise.all([
+      api('GET', '/v1/status'), api('GET', '/v1/tasks'),
+      api('GET', '/v1/approvals?states=APPROVAL_STATE_PENDING'), api('GET', '/v1/audit?limit=1000'),
+    ]);
+    let s = `cap ${st.cap ?? 0} · running ${st.running ?? 0} · queued ${st.queued ?? 0} · waiting ${st.waiting ?? 0} · approvals ${st.pendingApprovals ?? 0}`;
+    if (st.limitBlockedUntil) s += ` · usage limit until ${new Date(st.limitBlockedUntil).toLocaleTimeString()}`;
+    document.getElementById('status').textContent = s;
+
+    const tb = document.getElementById('tasks'); tb.replaceChildren();
+    const sel = document.getElementById('sayTask'); const keep = sel.value; sel.replaceChildren();
+    for (const t of tasks.tasks || []) {
+      const st = short(t.state);
+      const act = st === 'paused' ? el('button', { onclick: () => act2('resume', t.id) }, 'resume')
+        : ['running', 'queued', 'waiting'].includes(st) ? el('button', { onclick: () => act2('pause', t.id) }, 'pause') : '';
+      tb.append(el('tr', {}, el('td', {}, t.title, el('div', { class: 'muted' }, t.id)), el('td', {}, st + (t.waitReason ? ` (${t.waitReason})` : '')),
+        el('td', {}, short(t.class)), el('td', {}, t.score ?? 0), el('td', {}, t.profile), el('td', {}, act)));
+      sel.append(el('option', { value: t.id }, `${t.title} (${t.id})`));
+    }
+    if (keep) sel.value = keep;
+
+    const ab = document.getElementById('approvals'); ab.replaceChildren();
+    const list = appr.approvals || [];
+    if (!list.length) ab.textContent = 'none';
+    for (const a of list) {
+      ab.append(el('div', { class: 'approval' },
+        el('div', {}, el('strong', {}, a.summary), ' ', el('span', { class: 'muted' }, `${short(a.class)} · ${a.taskId || 'no task'} · ${a.id}`)),
+        a.toolName ? el('div', { class: 'muted' }, 'tool: ' + a.toolName) : '',
+        el('pre', {}, JSON.stringify(a.payload || {}, null, 2)),
+        el('div', { class: 'row' },
+          el('button', { class: 'primary', onclick: () => decide(a, true) }, 'Approve exactly this'),
+          el('button', { class: 'danger', onclick: () => decide(a, false) }, 'Reject'))));
+    }
+
+    const au = document.getElementById('audit'); au.replaceChildren();
+    for (const ev of (audit.events || []).slice(-25).reverse()) {
+      au.append(el('tr', {}, el('td', { class: 'muted' }, new Date(ev.ts).toLocaleString()), el('td', {}, ev.actor), el('td', {}, ev.action), el('td', {}, ev.subject)));
+    }
+    report(null);
+  } catch (e) { report(e); }
+}
+async function act2(verb, id) { try { await api('POST', `/v1/tasks/${id}:${verb}`, {}); refresh(); } catch (e) { report(e); } }
+async function decide(a, approve) {
+  const reason = approve ? '' : prompt('Reason for rejecting (sent to the session):') ?? '';
+  if (!approve && reason === '') return;
+  try { await api('POST', `/v1/approvals/${a.id}:decide`, { approve, reason, payloadHash: a.payloadHash }); refresh(); } catch (e) { report(e); }
+}
+document.getElementById('newtask').onsubmit = async (ev) => {
+  ev.preventDefault(); const f = new FormData(ev.target);
+  try { await api('POST', '/v1/tasks', Object.fromEntries(f)); ev.target.reset(); refresh(); } catch (e) { report(e); }
+};
+document.getElementById('say').onsubmit = async (ev) => {
+  ev.preventDefault(); const f = Object.fromEntries(new FormData(ev.target));
+  try { const r = await api('POST', `/v1/tasks/${f.id}:say`, { text: f.text }); ev.target.text.value = ''; report(r.delivered ? null : 'queued: delivered when the session runs'); refresh(); } catch (e) { report(e); }
+};
+refresh(); setInterval(refresh, 10000);
+</script>
+</body>
+</html>

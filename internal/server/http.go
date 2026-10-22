@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	_ "embed"
 	"fmt"
 	"net"
 	"net/http"
@@ -17,6 +18,9 @@ import (
 	"google.golang.org/grpc/test/bufconn"
 	"google.golang.org/protobuf/encoding/protojson"
 )
+
+//go:embed ui/index.html
+var uiPage []byte
 
 // Handler serves gRPC (for the CLI) and the grpc-gateway REST/JSON API (for
 // the web UI, the Discord bot and Claude Code hooks) on one port. Both go
@@ -76,6 +80,14 @@ func (s *Server) Handler(ctx context.Context) (http.Handler, func(), error) {
 		fmt.Fprintln(w, "ok")
 	})
 	mux.HandleFunc("/metrics", s.metrics)
+	// The page is static; every piece of data on it comes from the
+	// authenticated API.
+	mux.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; frame-ancestors 'none'")
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		w.Write(uiPage)
+	})
 	mux.Handle("/", gw)
 
 	root := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
