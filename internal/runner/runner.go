@@ -15,6 +15,7 @@ type Spec struct {
 	Prompt  string
 	// ClaudeSessionID is set when resuming (claude --resume).
 	ClaudeSessionID string
+	Model           string
 	// SessionToken authenticates the session's hooks and aejar tool calls.
 	SessionToken string
 }

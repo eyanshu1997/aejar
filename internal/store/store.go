@@ -103,6 +103,7 @@ var migrations = []string{
 	`ALTER TABLE tasks ADD COLUMN idle_since INTEGER NOT NULL DEFAULT 0;
 	ALTER TABLE tasks ADD COLUMN complete_requested INTEGER NOT NULL DEFAULT 0;
 	ALTER TABLE tasks ADD COLUMN last_screen TEXT NOT NULL DEFAULT '';`,
+	`ALTER TABLE tasks ADD COLUMN model TEXT NOT NULL DEFAULT '';`,
 }
 
 // Open opens (creating if needed) the database at path and applies

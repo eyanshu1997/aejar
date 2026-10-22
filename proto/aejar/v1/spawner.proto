@@ -35,6 +35,8 @@ message StartSessionRequest {
   // Set to resume a conversation (claude --resume).
   string claude_session_id = 4;
   string session_token = 5;
+  // Model alias; empty uses the profile default.
+  string model = 6;
 }
 
 message StartSessionResponse {

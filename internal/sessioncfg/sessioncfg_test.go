@@ -110,3 +110,24 @@ func TestHooksAreCommandHooks(t *testing.T) {
 		}
 	}
 }
+
+func TestModelPerProfile(t *testing.T) {
+	model := func(profile, override string) string {
+		files, err := Generate(Input{TaskID: "t-abcdefgh", Profile: profile, Model: override, AejardURL: "http://aejard:9111"})
+		if err != nil {
+			t.Fatal(err)
+		}
+		var launch struct{ Args []string }
+		json.Unmarshal(files["launch.json"], &launch)
+		return launch.Args[slices.Index(launch.Args, "--model")+1]
+	}
+	if m := model("plan", ""); m != "sonnet" {
+		t.Errorf("plan default: %s", m)
+	}
+	if m := model("project", ""); m != "opus" {
+		t.Errorf("project default: %s", m)
+	}
+	if m := model("plan", "opus"); m != "opus" {
+		t.Errorf("override: %s", m)
+	}
+}

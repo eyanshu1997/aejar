@@ -232,8 +232,8 @@ func (s *Server) startTask(ctx context.Context, id string) error {
 	}
 	defer tx.Rollback()
 	var spec runner.Spec
-	err = tx.QueryRowContext(ctx, `SELECT profile, prompt, claude_session_id FROM tasks WHERE id = ?`, id).
-		Scan(&spec.Profile, &spec.Prompt, &spec.ClaudeSessionID)
+	err = tx.QueryRowContext(ctx, `SELECT profile, prompt, claude_session_id, model FROM tasks WHERE id = ?`, id).
+		Scan(&spec.Profile, &spec.Prompt, &spec.ClaudeSessionID, &spec.Model)
 	if err != nil {
 		return err
 	}

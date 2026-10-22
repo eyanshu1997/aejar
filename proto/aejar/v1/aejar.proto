@@ -78,6 +78,9 @@ message CreateTaskRequest {
   TaskClass class = 3;
   string profile = 4;
   string doc_folder = 5;
+  // sonnet, opus or haiku; empty uses the profile default (opus for
+  // project, sonnet otherwise).
+  string model = 6;
 }
 
 message GetTaskRequest {

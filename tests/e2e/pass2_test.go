@@ -357,3 +357,17 @@ func TestTranscriptHistory(t *testing.T) {
 		t.Fatalf("after finish: %v", got)
 	}
 }
+
+func TestTaskModelChoice(t *testing.T) {
+	e := setup(t)
+	if code, _ := e.call("POST", "/v1/tasks", e.owner, map[string]any{"title": "x", "model": "gpt-9"}); code != http.StatusBadRequest {
+		t.Fatalf("unknown model accepted: %d", code)
+	}
+	id := e.must("POST", "/v1/tasks", e.owner, map[string]any{"title": "deep plan", "model": "opus"})["id"].(string)
+	e.tick()
+	for _, c := range e.rec.Calls() {
+		if c.Op == "start" && c.TaskID == id && c.Spec.Model != "opus" {
+			t.Fatalf("model not passed to the runner: %q", c.Spec.Model)
+		}
+	}
+}

@@ -320,7 +320,7 @@ func (b *Bot) Command(ctx context.Context, userID, name string, opts map[string]
 		class := map[string]aejarv1.TaskClass{"p0": aejarv1.TaskClass_TASK_CLASS_P0, "p1": aejarv1.TaskClass_TASK_CLASS_P1,
 			"p2": aejarv1.TaskClass_TASK_CLASS_P2, "p3": aejarv1.TaskClass_TASK_CLASS_P3}[opts["class"]]
 		t, err := b.API.Tasks.CreateTask(ctx, &aejarv1.CreateTaskRequest{
-			Title: opts["title"], Prompt: opts["prompt"], Class: class, Profile: opts["profile"],
+			Title: opts["title"], Prompt: opts["prompt"], Class: class, Profile: opts["profile"], Model: opts["model"],
 		})
 		if err != nil {
 			return "Error: " + err.Error()

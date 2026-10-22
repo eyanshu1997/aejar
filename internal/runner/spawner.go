@@ -21,7 +21,7 @@ type Spawner struct {
 func (s *Spawner) Start(ctx context.Context, spec Spec) error {
 	_, err := s.Client.StartSession(ctx, &aejarv1.StartSessionRequest{
 		TaskId: spec.TaskID, Profile: spec.Profile, Prompt: spec.Prompt,
-		ClaudeSessionId: spec.ClaudeSessionID, SessionToken: spec.SessionToken,
+		ClaudeSessionId: spec.ClaudeSessionID, SessionToken: spec.SessionToken, Model: spec.Model,
 	})
 	return err
 }

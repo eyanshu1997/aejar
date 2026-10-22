@@ -67,6 +67,9 @@ var Commands = []*discordgo.ApplicationCommand{
 		{Type: discordgo.ApplicationCommandOptionString, Name: "prompt", Description: "What the session should do", Required: true},
 		{Type: discordgo.ApplicationCommandOptionString, Name: "class", Description: "Priority", Choices: classChoices},
 		{Type: discordgo.ApplicationCommandOptionString, Name: "profile", Description: "Session profile", Choices: profileChoices},
+		{Type: discordgo.ApplicationCommandOptionString, Name: "model", Description: "Model (default: Sonnet; Opus for project)", Choices: []*discordgo.ApplicationCommandOptionChoice{
+			{Name: "Opus (deep planning)", Value: "opus"}, {Name: "Sonnet", Value: "sonnet"}, {Name: "Haiku (cheap)", Value: "haiku"},
+		}},
 	}},
 	{Name: "status", Description: "Scheduler and limit status"},
 	{Name: "tasks", Description: "Recent tasks"},

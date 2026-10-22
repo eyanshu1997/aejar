@@ -81,6 +81,9 @@ func Validate(req *aejarv1.StartSessionRequest) error {
 	if req.ClaudeSessionId != "" && !sessionIDRe.MatchString(req.ClaudeSessionId) {
 		return status.Errorf(codes.InvalidArgument, "bad claude session id")
 	}
+	if req.Model != "" && !policy.Models[req.Model] {
+		return status.Errorf(codes.InvalidArgument, "unknown model %q", req.Model)
+	}
 	if !tokenRe.MatchString(req.SessionToken) {
 		return status.Errorf(codes.InvalidArgument, "bad session token")
 	}
@@ -146,7 +149,7 @@ func secretEnv(cfg Config, req *aejarv1.StartSessionRequest) []string {
 func Prepare(cfg Config, req *aejarv1.StartSessionRequest, chown func(string, int, int) error) error {
 	files, err := sessioncfg.Generate(sessioncfg.Input{
 		TaskID: req.TaskId, Profile: req.Profile, Prompt: req.Prompt,
-		ClaudeSessionID: req.ClaudeSessionId, AejardURL: cfg.AejardURL,
+		ClaudeSessionID: req.ClaudeSessionId, Model: req.Model, AejardURL: cfg.AejardURL,
 	})
 	if err != nil {
 		return err

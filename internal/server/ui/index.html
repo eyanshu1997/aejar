@@ -55,6 +55,7 @@
         <div class="row">
           <select name="class"><option value="TASK_CLASS_P1">P1 normal</option><option value="TASK_CLASS_P0">P0 now</option><option value="TASK_CLASS_P2">P2 background</option><option value="TASK_CLASS_P3">P3 housekeeping</option></select>
           <select name="profile"><option>plan</option><option>research</option><option>action</option><option>mail</option><option>project</option></select>
+          <select name="model"><option value="">Model: default (Sonnet; Opus for project)</option><option value="opus">Opus (deep planning)</option><option value="sonnet">Sonnet</option><option value="haiku">Haiku (cheap)</option></select>
         </div>
         <button class="primary" type="submit">Create task</button>
       </form>
@@ -137,7 +138,7 @@ function renderTasks() {
     const st = short(t.state);
     box.append(el('div', { class: 'task' + (t.id === selected ? ' sel' : ''), onclick: () => select(t.id) },
       el('div', { class: 'row' }, el('strong', {}, t.title), el('span', { class: 'badge ' + st }, st + (t.waitReason ? ` · ${t.waitReason}` : ''))),
-      el('div', { class: 'muted' }, `${t.id} · ${short(t.class)} · ${t.profile} · score ${t.score ?? 0}`)));
+      el('div', { class: 'muted' }, `${t.id} · ${short(t.class)} · ${t.profile}${t.model ? ' · ' + t.model : ''} · score ${t.score ?? 0}`)));
   }
 }
 function approvalCard(a) {

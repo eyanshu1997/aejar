@@ -355,7 +355,10 @@ type Task struct {
 	CreatedAt       *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	UpdatedAt       *timestamppb.Timestamp `protobuf:"bytes,12,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
 	// Coherence folder holding this task's docs.
-	DocFolder     string `protobuf:"bytes,13,opt,name=doc_folder,json=docFolder,proto3" json:"doc_folder,omitempty"`
+	DocFolder string `protobuf:"bytes,13,opt,name=doc_folder,json=docFolder,proto3" json:"doc_folder,omitempty"`
+	// Model alias for the session (sonnet, opus, haiku); empty uses the
+	// profile default.
+	Model         string `protobuf:"bytes,14,opt,name=model,proto3" json:"model,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -477,6 +480,13 @@ func (x *Task) GetUpdatedAt() *timestamppb.Timestamp {
 func (x *Task) GetDocFolder() string {
 	if x != nil {
 		return x.DocFolder
+	}
+	return ""
+}
+
+func (x *Task) GetModel() string {
+	if x != nil {
+		return x.Model
 	}
 	return ""
 }
@@ -736,7 +746,7 @@ var File_aejar_v1_types_proto protoreflect.FileDescriptor
 
 const file_aejar_v1_types_proto_rawDesc = "" +
 	"\n" +
-	"\x14aejar/v1/types.proto\x12\baejar.v1\x1a\x1cgoogle/protobuf/struct.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xc9\x03\n" +
+	"\x14aejar/v1/types.proto\x12\baejar.v1\x1a\x1cgoogle/protobuf/struct.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xdf\x03\n" +
 	"\x04Task\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12\x16\n" +
@@ -755,7 +765,8 @@ const file_aejar_v1_types_proto_rawDesc = "" +
 	"\n" +
 	"updated_at\x18\f \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x12\x1d\n" +
 	"\n" +
-	"doc_folder\x18\r \x01(\tR\tdocFolder\"\xa9\x04\n" +
+	"doc_folder\x18\r \x01(\tR\tdocFolder\x12\x14\n" +
+	"\x05model\x18\x0e \x01(\tR\x05model\"\xa9\x04\n" +
 	"\bApproval\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
 	"\atask_id\x18\x02 \x01(\tR\x06taskId\x12-\n" +

@@ -17,14 +17,14 @@ import (
 )
 
 const taskColumns = `id, title, prompt, class, state, user_bump, wake_boost, wait_reason, profile,
-	claude_session_id, doc_folder, created_at, updated_at`
+	claude_session_id, doc_folder, created_at, updated_at, model`
 
 func (s *Server) scanTask(row interface{ Scan(...any) error }) (*aejarv1.Task, error) {
 	var t aejarv1.Task
 	var class, state, wake int32
 	var created, updated int64
 	err := row.Scan(&t.Id, &t.Title, &t.Prompt, &class, &state, &t.UserBump, &wake, &t.WaitReason, &t.Profile,
-		&t.ClaudeSessionId, &t.DocFolder, &created, &updated)
+		&t.ClaudeSessionId, &t.DocFolder, &created, &updated, &t.Model)
 	if err != nil {
 		return nil, err
 	}
@@ -61,15 +61,18 @@ func (s *Server) CreateTask(ctx context.Context, req *aejarv1.CreateTaskRequest)
 	if _, ok := policy.Profiles[profile]; !ok {
 		return nil, status.Errorf(codes.InvalidArgument, "unknown profile %q", profile)
 	}
+	if req.Model != "" && !policy.Models[req.Model] {
+		return nil, status.Errorf(codes.InvalidArgument, "unknown model %q (sonnet, opus or haiku)", req.Model)
+	}
 	id := newID("t")
 	now := s.Now().UnixNano()
-	_, err := s.DB.ExecContext(ctx, `INSERT INTO tasks (id, title, prompt, class, state, profile, doc_folder, created_at, updated_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`, id, title, req.Prompt, class, aejarv1.TaskState_TASK_STATE_QUEUED,
-		profile, req.DocFolder, now, now)
+	_, err := s.DB.ExecContext(ctx, `INSERT INTO tasks (id, title, prompt, class, state, profile, doc_folder, model, created_at, updated_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, id, title, req.Prompt, class, aejarv1.TaskState_TASK_STATE_QUEUED,
+		profile, req.DocFolder, req.Model, now, now)
 	if err != nil {
 		return nil, err
 	}
-	s.audit(ctx, auth.From(ctx).Name, "task.created", id, map[string]any{"title": title, "class": class.String(), "profile": profile})
+	s.audit(ctx, auth.From(ctx).Name, "task.created", id, map[string]any{"title": title, "class": class.String(), "profile": profile, "model": req.Model})
 	s.Kick()
 	return s.loadTask(ctx, id)
 }

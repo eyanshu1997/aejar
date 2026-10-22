@@ -25,12 +25,15 @@ const (
 )
 
 type CreateTaskRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Title         string                 `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
-	Prompt        string                 `protobuf:"bytes,2,opt,name=prompt,proto3" json:"prompt,omitempty"`
-	Class         TaskClass              `protobuf:"varint,3,opt,name=class,proto3,enum=aejar.v1.TaskClass" json:"class,omitempty"`
-	Profile       string                 `protobuf:"bytes,4,opt,name=profile,proto3" json:"profile,omitempty"`
-	DocFolder     string                 `protobuf:"bytes,5,opt,name=doc_folder,json=docFolder,proto3" json:"doc_folder,omitempty"`
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	Title     string                 `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
+	Prompt    string                 `protobuf:"bytes,2,opt,name=prompt,proto3" json:"prompt,omitempty"`
+	Class     TaskClass              `protobuf:"varint,3,opt,name=class,proto3,enum=aejar.v1.TaskClass" json:"class,omitempty"`
+	Profile   string                 `protobuf:"bytes,4,opt,name=profile,proto3" json:"profile,omitempty"`
+	DocFolder string                 `protobuf:"bytes,5,opt,name=doc_folder,json=docFolder,proto3" json:"doc_folder,omitempty"`
+	// sonnet, opus or haiku; empty uses the profile default (opus for
+	// project, sonnet otherwise).
+	Model         string `protobuf:"bytes,6,opt,name=model,proto3" json:"model,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -96,6 +99,13 @@ func (x *CreateTaskRequest) GetProfile() string {
 func (x *CreateTaskRequest) GetDocFolder() string {
 	if x != nil {
 		return x.DocFolder
+	}
+	return ""
+}
+
+func (x *CreateTaskRequest) GetModel() string {
+	if x != nil {
+		return x.Model
 	}
 	return ""
 }
@@ -1865,14 +1875,15 @@ var File_aejar_v1_aejar_proto protoreflect.FileDescriptor
 
 const file_aejar_v1_aejar_proto_rawDesc = "" +
 	"\n" +
-	"\x14aejar/v1/aejar.proto\x12\baejar.v1\x1a\x14aejar/v1/types.proto\x1a\x1cgoogle/api/annotations.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xa5\x01\n" +
+	"\x14aejar/v1/aejar.proto\x12\baejar.v1\x1a\x14aejar/v1/types.proto\x1a\x1cgoogle/api/annotations.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xbb\x01\n" +
 	"\x11CreateTaskRequest\x12\x14\n" +
 	"\x05title\x18\x01 \x01(\tR\x05title\x12\x16\n" +
 	"\x06prompt\x18\x02 \x01(\tR\x06prompt\x12)\n" +
 	"\x05class\x18\x03 \x01(\x0e2\x13.aejar.v1.TaskClassR\x05class\x12\x18\n" +
 	"\aprofile\x18\x04 \x01(\tR\aprofile\x12\x1d\n" +
 	"\n" +
-	"doc_folder\x18\x05 \x01(\tR\tdocFolder\" \n" +
+	"doc_folder\x18\x05 \x01(\tR\tdocFolder\x12\x14\n" +
+	"\x05model\x18\x06 \x01(\tR\x05model\" \n" +
 	"\x0eGetTaskRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"?\n" +
 	"\x10ListTasksRequest\x12+\n" +

@@ -126,8 +126,10 @@ type StartSessionRequest struct {
 	// Set to resume a conversation (claude --resume).
 	ClaudeSessionId string `protobuf:"bytes,4,opt,name=claude_session_id,json=claudeSessionId,proto3" json:"claude_session_id,omitempty"`
 	SessionToken    string `protobuf:"bytes,5,opt,name=session_token,json=sessionToken,proto3" json:"session_token,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	// Model alias; empty uses the profile default.
+	Model         string `protobuf:"bytes,6,opt,name=model,proto3" json:"model,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *StartSessionRequest) Reset() {
@@ -191,6 +193,13 @@ func (x *StartSessionRequest) GetClaudeSessionId() string {
 func (x *StartSessionRequest) GetSessionToken() string {
 	if x != nil {
 		return x.SessionToken
+	}
+	return ""
+}
+
+func (x *StartSessionRequest) GetModel() string {
+	if x != nil {
+		return x.Model
 	}
 	return ""
 }
@@ -565,13 +574,14 @@ const file_aejar_v1_spawner_proto_rawDesc = "" +
 	"\atask_id\x18\x01 \x01(\tR\x06taskId\x12#\n" +
 	"\rhistory_lines\x18\x02 \x01(\x05R\fhistoryLines\"+\n" +
 	"\x15CaptureScreenResponse\x12\x12\n" +
-	"\x04text\x18\x01 \x01(\tR\x04text\"\xb1\x01\n" +
+	"\x04text\x18\x01 \x01(\tR\x04text\"\xc7\x01\n" +
 	"\x13StartSessionRequest\x12\x17\n" +
 	"\atask_id\x18\x01 \x01(\tR\x06taskId\x12\x18\n" +
 	"\aprofile\x18\x02 \x01(\tR\aprofile\x12\x16\n" +
 	"\x06prompt\x18\x03 \x01(\tR\x06prompt\x12*\n" +
 	"\x11claude_session_id\x18\x04 \x01(\tR\x0fclaudeSessionId\x12#\n" +
-	"\rsession_token\x18\x05 \x01(\tR\fsessionToken\"4\n" +
+	"\rsession_token\x18\x05 \x01(\tR\fsessionToken\x12\x14\n" +
+	"\x05model\x18\x06 \x01(\tR\x05model\"4\n" +
 	"\x14StartSessionResponse\x12\x1c\n" +
 	"\tcontainer\x18\x01 \x01(\tR\tcontainer\"E\n" +
 	"\x12StopSessionRequest\x12\x17\n" +

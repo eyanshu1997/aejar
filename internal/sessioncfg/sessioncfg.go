@@ -27,6 +27,8 @@ type Input struct {
 	Profile         string
 	Prompt          string
 	ClaudeSessionID string
+	// Model is a model alias; empty uses the profile default.
+	Model string
 	// AejardURL is how the container reaches aejard, e.g. http://aejard:9111.
 	AejardURL string
 }
@@ -140,7 +142,11 @@ func MCPConfig(in Input) map[string]any {
 
 // Args is the claude command line.
 func Args(in Input, prof policy.Profile) []string {
-	args := []string{"--name", in.TaskID}
+	model := in.Model
+	if model == "" {
+		model = policy.DefaultModel(prof.Name)
+	}
+	args := []string{"--name", in.TaskID, "--model", model}
 	if prof.Name != "action" {
 		// The container is the boundary; the PreToolUse gate still applies.
 		args = append(args, "--dangerously-skip-permissions")

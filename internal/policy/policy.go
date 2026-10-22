@@ -37,6 +37,18 @@ type Profile struct {
 	Connectors []string
 }
 
+// Models are the model aliases sessions may run on.
+var Models = map[string]bool{"sonnet": true, "opus": true, "haiku": true}
+
+// DefaultModel is the session model for a profile: Opus for multi-agent
+// project work, Sonnet for everything else.
+func DefaultModel(profile string) string {
+	if profile == "project" {
+		return "opus"
+	}
+	return "sonnet"
+}
+
 // Profiles are the built-in session profiles.
 var Profiles = map[string]Profile{
 	"plan":     {Name: "plan"},
